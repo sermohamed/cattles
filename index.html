@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiveStock Auctions — Professional Cattle Trading Platform</title>
-    <script src="https://js.stripe.com/v3/"></script>
     <style>
         :root {
             --primary: #8B4513;
             --primary-dark: #5D2E0C;
-            --primary-light: #A0522D;
             --accent: #D2691E;
             --success: #2E7D32;
             --success-light: #E8F5E9;
@@ -41,7 +39,6 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .fade-in { animation: fadeIn 0.4s ease; }
@@ -63,168 +60,78 @@
             z-index: 100;
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.4rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
+        .brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
         .brand-icon { font-size: 1.8rem; }
 
         .live-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            background: var(--danger);
-            padding: 0.3rem 0.9rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: var(--danger); padding: 0.3rem 0.9rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
             animation: pulse 2s infinite;
         }
+        .live-indicator::before { content: ""; width: 8px; height: 8px; background: white; border-radius: 50%; }
 
-        .live-indicator::before {
-            content: "";
-            width: 8px; height: 8px;
-            background: white;
-            border-radius: 50%;
-        }
-
-        .top-actions {
-            display: flex;
-            align-items: center;
-            gap: 1.25rem;
-        }
-
+        .top-actions { display: flex; align-items: center; gap: 1.25rem; }
         .balance-chip {
-            background: rgba(255,255,255,0.15);
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-variant-numeric: tabular-nums;
-            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.15); padding: 0.5rem 1rem; border-radius: var(--radius-sm);
+            font-weight: 600; font-variant-numeric: tabular-nums; backdrop-filter: blur(10px);
         }
 
         .user-menu { position: relative; }
-
         .user-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
+            display: flex; align-items: center; gap: 0.6rem;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 0.5rem 1rem; border-radius: var(--radius-sm);
+            cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
         }
-
         .user-btn:hover { background: rgba(255,255,255,0.2); }
 
         .dropdown {
-            position: absolute;
-            top: calc(100% + 0.5rem);
-            right: 0;
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            min-width: 200px;
-            overflow: hidden;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.2s;
-            z-index: 200;
+            position: absolute; top: calc(100% + 0.5rem); right: 0;
+            background: var(--surface); border-radius: var(--radius);
+            box-shadow: var(--shadow-lg); min-width: 200px; overflow: hidden;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: all 0.2s; z-index: 200;
         }
-
-        .dropdown.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
+        .dropdown.active { opacity: 1; visibility: visible; transform: translateY(0); }
 
         .dropdown-item {
-            padding: 0.75rem 1rem;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
+            padding: 0.75rem 1rem; color: var(--text); cursor: pointer;
+            font-size: 0.9rem; display: flex; align-items: center; gap: 0.6rem;
             transition: background 0.15s;
         }
-
         .dropdown-item:hover { background: #F5F5F5; }
         .dropdown-item.danger { color: var(--danger); }
         .dropdown-divider { height: 1px; background: var(--border); margin: 0.25rem 0; }
 
         .sidebar {
-            width: 260px;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 50;
-            transition: transform 0.3s;
+            width: 260px; background: var(--surface); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; position: fixed; height: 100vh;
+            overflow-y: auto; z-index: 50; transition: transform 0.3s;
         }
-
-        .sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border); }
         .nav-section { padding: 1rem 0; }
-
         .nav-label {
-            padding: 0 1.5rem;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
+            padding: 0 1.5rem; font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-secondary); margin-bottom: 0.5rem;
         }
-
         .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1.5rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.15s;
-            border-left: 3px solid transparent;
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1.5rem; color: var(--text-secondary);
+            cursor: pointer; font-size: 0.9rem; font-weight: 500;
+            transition: all 0.15s; border-left: 3px solid transparent;
         }
-
         .nav-item:hover { background: #F5F5F5; color: var(--primary); }
         .nav-item.active { background: #F5F5F5; color: var(--primary); border-left-color: var(--primary); }
         .nav-item .icon { font-size: 1.1rem; width: 24px; text-align: center; }
 
         .sidebar-footer {
-            margin-top: auto;
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border);
-            font-size: 0.75rem;
-            color: var(--text-secondary);
+            margin-top: auto; padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-secondary);
         }
 
-        .content-area {
-            margin-left: 260px;
-            padding: 2rem;
-            max-width: 1200px;
-        }
-
+        .content-area { margin-left: 260px; padding: 2rem; max-width: 1200px; }
         @media (max-width: 1024px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
@@ -232,753 +139,300 @@
         }
 
         .card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border);
-            overflow: hidden;
+            background: var(--surface); border-radius: var(--radius);
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border); overflow: hidden;
         }
-
         .card-header {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #FAFAFA;
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; background: #FAFAFA;
         }
-
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
+        .card-title { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
         .card-body { padding: 1.5rem; }
 
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-        
-        @media (max-width: 768px) {
-            .grid-2, .grid-3 { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
 
         .video-container {
-            position: relative;
-            background: #000;
-            border-radius: var(--radius);
-            overflow: hidden;
-            aspect-ratio: 16/9;
+            position: relative; background: #000; border-radius: var(--radius);
+            overflow: hidden; aspect-ratio: 16/9;
         }
-
-        .video-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
+        .video-container iframe { width: 100%; height: 100%; border: none; }
         .stream-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            position: absolute; bottom: 0; left: 0; right: 0;
             background: linear-gradient(transparent, rgba(0,0,0,0.8));
-            padding: 2rem 1.5rem 1.5rem;
-            color: white;
-            opacity: 0;
-            transition: opacity 0.3s;
+            padding: 2rem 1.5rem 1.5rem; color: white; opacity: 0; transition: opacity 0.3s;
         }
-
         .video-container:hover .stream-overlay { opacity: 1; }
 
         .form-group { margin-bottom: 1.25rem; }
-        .form-label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 0.4rem;
-            color: var(--text);
-        }
-
+        .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text); }
         .form-input, .form-select, .form-textarea {
-            width: 100%;
-            padding: 0.7rem 1rem;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            font-family: inherit;
-            transition: all 0.2s;
-            background: var(--surface);
+            width: 100%; padding: 0.7rem 1rem; border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); font-size: 0.95rem; font-family: inherit;
+            transition: all 0.2s; background: var(--surface);
         }
-
         .form-input:focus, .form-select:focus, .form-textarea:focus {
-            outline: none;
-            border-color: var(--accent);
+            outline: none; border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.1);
         }
-
         .form-textarea { resize: vertical; min-height: 100px; }
-
         .input-group { display: flex; gap: 0.5rem; }
         .input-group .form-input { flex: 1; }
 
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.7rem 1.25rem;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            white-space: nowrap;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.7rem 1.25rem; border: none; border-radius: var(--radius-sm);
+            font-size: 0.95rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; white-space: nowrap;
         }
-
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
+        .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
+        .btn-success { background: var(--success); color: white; }
         .btn-success:hover:not(:disabled) { background: #1B5E20; transform: translateY(-1px); }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
+        .btn-danger { background: var(--danger); color: white; }
         .btn-danger:hover:not(:disabled) { background: #B71C1C; }
-
         .btn-outline {
-            background: transparent;
-            border: 1.5px solid var(--border);
-            color: var(--text);
+            background: transparent; border: 1.5px solid var(--border); color: var(--text);
         }
         .btn-outline:hover:not(:disabled) { background: #F5F5F5; border-color: var(--text-secondary); }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-secondary);
-        }
+        .btn-ghost { background: transparent; color: var(--text-secondary); }
         .btn-ghost:hover { background: #F5F5F5; color: var(--text); }
-
         .btn-lg { padding: 1rem 2rem; font-size: 1.1rem; }
         .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .btn-link { background: none; border: none; color: var(--primary); text-decoration: underline; cursor: pointer; font-size: 0.85rem; }
 
         .auth-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--bg) 0%, #E8E0D0 100%);
-            padding: 2rem;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--bg) 0%, #E8E0D0 100%); padding: 2rem;
         }
-
         .auth-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            width: 100%;
-            max-width: 440px;
-            overflow: hidden;
+            background: var(--surface); border-radius: var(--radius);
+            box-shadow: var(--shadow-lg); width: 100%; max-width: 440px; overflow: hidden;
         }
-
-        .auth-header {
-            padding: 2rem 2rem 1rem;
-            text-align: center;
-        }
-
+        .auth-header { padding: 2rem 2rem 1rem; text-align: center; }
         .auth-header .brand-icon { font-size: 3rem; margin-bottom: 0.5rem; }
         .auth-header h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
         .auth-header p { color: var(--text-secondary); font-size: 0.9rem; }
-
-        .auth-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-        }
-
+        .auth-tabs { display: flex; border-bottom: 1px solid var(--border); }
         .auth-tab {
-            flex: 1;
-            padding: 1rem;
-            background: none;
-            border: none;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            cursor: pointer;
-            position: relative;
-            transition: color 0.2s;
+            flex: 1; padding: 1rem; background: none; border: none;
+            font-size: 0.95rem; font-weight: 600; color: var(--text-secondary);
+            cursor: pointer; position: relative; transition: color 0.2s;
         }
-
         .auth-tab.active { color: var(--primary); }
         .auth-tab.active::after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            left: 20%;
-            right: 20%;
-            height: 2px;
-            background: var(--primary);
-            border-radius: 2px;
+            content: ""; position: absolute; bottom: 0; left: 20%; right: 20%;
+            height: 2px; background: var(--primary); border-radius: 2px;
         }
-
         .auth-body { padding: 1.5rem 2rem 2rem; }
-
         .social-login {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;
         }
-
         .social-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.7rem;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            background: var(--surface);
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.7rem; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--surface); cursor: pointer; font-size: 0.85rem; font-weight: 500;
             transition: all 0.2s;
         }
-
         .social-btn:hover { background: #F5F5F5; border-color: var(--text-secondary); }
-
         .divider {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin: 1.25rem 0;
-            color: var(--text-secondary);
-            font-size: 0.8rem;
+            display: flex; align-items: center; gap: 1rem;
+            margin: 1.25rem 0; color: var(--text-secondary); font-size: 0.8rem;
         }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 
-        .divider::before, .divider::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .lot-hero {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
+        .lot-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
         @media (max-width: 768px) { .lot-hero { grid-template-columns: 1fr; } }
 
         .lot-gallery {
-            position: relative;
-            border-radius: var(--radius);
-            overflow: hidden;
-            background: linear-gradient(135deg, #E6D5B8, #D4C4A8);
-            aspect-ratio: 4/3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 5rem;
+            position: relative; border-radius: var(--radius); overflow: hidden;
+            background: linear-gradient(135deg, #E6D5B8, #D4C4A8); aspect-ratio: 4/3;
+            display: flex; align-items: center; justify-content: center; font-size: 5rem;
         }
-
-        .lot-gallery img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
+        .lot-gallery img { width: 100%; height: 100%; object-fit: cover; }
         .gallery-nav {
-            position: absolute;
-            bottom: 1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 0.5rem;
+            position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 0.5rem;
         }
-
         .gallery-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.5);
-            cursor: pointer;
-            transition: all 0.2s;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s;
         }
-
         .gallery-dot.active { background: white; width: 24px; border-radius: 4px; }
 
-        .lot-title {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--primary-dark);
-            margin-bottom: 0.5rem;
-            line-height: 1.2;
-        }
-
-        .lot-subtitle {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            margin-bottom: 1.25rem;
-        }
-
-        .lot-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
+        .lot-title { font-size: 2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem; line-height: 1.2; }
+        .lot-subtitle { font-size: 1rem; color: var(--text-secondary); margin-bottom: 1.25rem; }
+        .lot-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
         .tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.35rem 0.8rem;
-            background: #EFEBE9;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-secondary);
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.35rem 0.8rem; background: #EFEBE9;
+            border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);
         }
-
         .tag.primary { background: var(--primary); color: white; }
         .tag.success { background: var(--success-light); color: var(--success); }
 
         .price-block {
             background: linear-gradient(135deg, var(--success-light), #C8E6C9);
-            border-radius: var(--radius);
-            padding: 1.25rem;
-            margin-bottom: 1.25rem;
+            border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem;
         }
-
-        .price-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--success);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.25rem;
-        }
-
-        .price-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--success);
-            font-variant-numeric: tabular-nums;
-            line-height: 1;
-        }
-
-        .price-meta {
-            display: flex;
-            gap: 1.5rem;
-            margin-top: 0.75rem;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
+        .price-label { font-size: 0.85rem; font-weight: 600; color: var(--success); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.25rem; }
+        .price-value { font-size: 2.5rem; font-weight: 800; color: var(--success); font-variant-numeric: tabular-nums; line-height: 1; }
+        .price-meta { display: flex; gap: 1.5rem; margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary); }
 
         .countdown-box {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: #FFF3E0;
-            color: var(--accent);
-            padding: 0.6rem 1rem;
-            border-radius: var(--radius-sm);
-            font-weight: 700;
-            font-size: 1.1rem;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: #FFF3E0; color: var(--accent);
+            padding: 0.6rem 1rem; border-radius: var(--radius-sm);
+            font-weight: 700; font-size: 1.1rem;
         }
+        .countdown-box.urgent { background: var(--danger-light); color: var(--danger); animation: pulse 1s infinite; }
 
-        .countdown-box.urgent {
-            background: var(--danger-light);
-            color: var(--danger);
-            animation: pulse 1s infinite;
-        }
-
-        .bid-section {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 2px dashed var(--border);
-        }
-
-        .quick-bids {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.6rem;
-            margin-bottom: 1rem;
-        }
-
+        .bid-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px dashed var(--border); }
+        .quick-bids { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1rem; }
         .quick-bid-btn {
-            padding: 0.8rem;
-            border: 2px solid var(--border);
-            background: var(--surface);
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 1rem;
-            transition: all 0.2s;
-            font-variant-numeric: tabular-nums;
+            padding: 0.8rem; border: 2px solid var(--border); background: var(--surface);
+            border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; font-size: 1rem;
+            transition: all 0.2s; font-variant-numeric: tabular-nums;
         }
-
-        .quick-bid-btn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .bid-input-row {
-            display: flex;
-            gap: 0.6rem;
-            margin-bottom: 1rem;
-        }
-
+        .quick-bid-btn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+        .bid-input-row { display: flex; gap: 0.6rem; margin-bottom: 1rem; }
         .bid-input-row input {
-            flex: 1;
-            padding: 0.9rem;
-            border: 2px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-align: center;
-            font-variant-numeric: tabular-nums;
+            flex: 1; padding: 0.9rem; border: 2px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 1.1rem; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums;
         }
-
         .buy-now-bar {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            padding: 1rem;
+            display: flex; gap: 1rem; align-items: center; padding: 1rem;
             background: linear-gradient(135deg, #FFF8E1, #FFECB3);
-            border-radius: var(--radius-sm);
-            border: 1px solid #FFE082;
+            border-radius: var(--radius-sm); border: 1px solid #FFE082;
         }
-
         .buy-now-info { flex: 1; }
         .buy-now-label { font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; }
         .buy-now-price { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
 
         .table-wrap { overflow-x: auto; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         th {
-            text-align: left;
-            padding: 0.875rem 1rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-secondary);
-            background: #FAFAFA;
-            border-bottom: 1px solid var(--border);
+            text-align: left; padding: 0.875rem 1rem; font-size: 0.75rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);
+            background: #FAFAFA; border-bottom: 1px solid var(--border);
         }
-
-        td {
-            padding: 1rem;
-            border-bottom: 1px solid #F0F0F0;
-            vertical-align: middle;
-        }
-
+        td { padding: 1rem; border-bottom: 1px solid #F0F0F0; vertical-align: middle; }
         tr:hover td { background: #FAFAFA; }
         tr:last-child td { border-bottom: none; }
-
         .table-actions { display: flex; gap: 0.4rem; }
 
         .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.25rem 0.75rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700;
         }
-
         .badge-live { background: var(--danger-light); color: var(--danger); }
         .badge-upcoming { background: #E3F2FD; color: #1565C0; }
         .badge-sold { background: var(--success-light); color: var(--success); }
         .badge-pending { background: #FFF3E0; color: var(--accent); }
+        .badge-passed { background: #F5F5F5; color: var(--text-secondary); }
 
-        .bid-feed {
-            max-height: 320px;
-            overflow-y: auto;
-        }
-
+        .bid-feed { max-height: 320px; overflow-y: auto; }
         .bid-entry {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.875rem 1rem;
-            border-bottom: 1px solid #F5F5F5;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.875rem 1rem; border-bottom: 1px solid #F5F5F5;
             animation: slideIn 0.3s ease;
         }
-
         .bid-entry:last-child { border-bottom: none; }
         .bid-entry.winner { background: var(--success-light); }
-
         .bidder-info { display: flex; align-items: center; gap: 0.75rem; }
         .bidder-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+            width: 32px; height: 32px; border-radius: 50%;
             background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            font-weight: 700;
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700;
         }
-
         .bidder-name { font-weight: 600; font-size: 0.9rem; }
         .bid-time { font-size: 0.75rem; color: #999; }
         .bid-amount { font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; font-size: 1rem; }
 
-        .admin-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border);
+            background: var(--surface); border-radius: var(--radius); padding: 1.5rem;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border);
         }
-
-        .stat-label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--text);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .stat-change {
-            font-size: 0.85rem;
-            margin-top: 0.25rem;
-            font-weight: 600;
-        }
-
+        .stat-label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+        .stat-change { font-size: 0.85rem; margin-top: 0.25rem; font-weight: 600; }
         .stat-change.up { color: var(--success); }
         .stat-change.down { color: var(--danger); }
 
         .control-panel {
-            background: #1a1a2e;
-            color: white;
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            background: #1a1a2e; color: white; border-radius: var(--radius);
+            padding: 1.5rem; margin-bottom: 1.5rem;
         }
-
-        .control-panel h3 {
-            font-size: 1.1rem;
-            margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .control-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .control-group label {
-            display: block;
-            font-size: 0.8rem;
-            color: #aaa;
-            margin-bottom: 0.4rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
+        .control-panel h3 { font-size: 1.1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        .control-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .control-group label { display: block; font-size: 0.8rem; color: #aaa; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .control-group input, .control-group select {
-            width: 100%;
-            padding: 0.6rem;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: var(--radius-sm);
-            color: white;
-            font-size: 0.9rem;
+            width: 100%; padding: 0.6rem; background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-sm);
+            color: white; font-size: 0.9rem;
         }
+        .control-group input:focus { outline: none; border-color: var(--accent); }
+        .control-actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
 
-        .control-group input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .control-actions {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-
+        /* Modal System */
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s;
         }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
+        .modal-overlay.active { opacity: 1; visibility: visible; }
         .modal {
-            background: var(--surface);
-            border-radius: var(--radius);
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: var(--shadow-lg);
-            transform: scale(0.95);
-            transition: transform 0.3s;
+            background: var(--surface); border-radius: var(--radius);
+            width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+            box-shadow: var(--shadow-lg); transform: scale(0.95); transition: transform 0.3s;
         }
-
         .modal-overlay.active .modal { transform: scale(1); }
-
         .modal-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
         }
-
         .modal-header h2 { font-size: 1.25rem; }
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-secondary);
-            padding: 0.25rem;
-            line-height: 1;
-        }
-
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); padding: 0.25rem; line-height: 1; }
         .modal-body { padding: 1.5rem; }
-        .modal-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-        }
-
-        .stripe-element {
-            padding: 0.875rem;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            background: var(--surface);
-        }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem; }
 
         .payment-summary {
-            background: #FAFAFA;
-            border-radius: var(--radius-sm);
-            padding: 1rem;
-            margin-bottom: 1.5rem;
+            background: #FAFAFA; border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.5rem;
         }
+        .payment-line { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.9rem; }
+        .payment-line.total { border-top: 2px solid var(--border); margin-top: 0.5rem; padding-top: 0.75rem; font-weight: 700; font-size: 1.1rem; }
 
-        .payment-line {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            font-size: 0.9rem;
-        }
-
-        .payment-line.total {
-            border-top: 2px solid var(--border);
-            margin-top: 0.5rem;
-            padding-top: 0.75rem;
-            font-weight: 700;
-            font-size: 1.1rem;
+        .stripe-element {
+            padding: 0.875rem; border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); background: var(--surface);
         }
 
         .toast-container {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            z-index: 2000;
-            pointer-events: none;
+            position: fixed; bottom: 2rem; right: 2rem;
+            display: flex; flex-direction: column; gap: 0.75rem;
+            z-index: 2000; pointer-events: none;
         }
-
         .toast {
-            background: var(--text);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius-sm);
-            box-shadow: var(--shadow-lg);
-            font-weight: 500;
-            animation: slideIn 0.3s ease;
-            pointer-events: auto;
-            max-width: 400px;
+            background: var(--text); color: white; padding: 1rem 1.5rem;
+            border-radius: var(--radius-sm); box-shadow: var(--shadow-lg);
+            font-weight: 500; animation: slideIn 0.3s ease; pointer-events: auto; max-width: 400px;
         }
-
         .toast.success { background: var(--success); }
         .toast.error { background: var(--danger); }
         .toast.warning { background: var(--warning); color: var(--text); }
 
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1.5rem;
-            color: var(--text-secondary);
-        }
-
+        .empty-state { text-align: center; padding: 3rem 1.5rem; color: var(--text-secondary); }
         .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
         .empty-state h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text); }
 
         .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
         }
 
         .text-center { text-align: center; }
@@ -1000,11 +454,60 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+        .reminder-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem; border-bottom: 1px solid #F5F5F5;
+        }
+        .reminder-row:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
 
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- Global Modal Container -->
+<div class="modal-overlay" id="globalModal">
+    <div class="modal" id="globalModalContent">
+        <div class="modal-header">
+            <h2 id="modalTitle">Modal</h2>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer" id="modalFooter"></div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="paymentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>💳 Complete Payment</h2>
+            <button class="modal-close" onclick="closePaymentModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="payment-summary">
+                <div class="payment-line"><span>Winning Bid</span><span class="font-mono" id="payBidAmount">$0.00</span></div>
+                <div class="payment-line"><span>Buyer's Premium (8%)</span><span class="font-mono" id="payPremium">$0.00</span></div>
+                <div class="payment-line"><span>Transportation</span><span class="font-mono">$350.00</span></div>
+                <div class="payment-line total"><span>Total Due</span><span class="font-mono" id="payTotal">$0.00</span></div>
+            </div>
+            <form id="paymentForm" onsubmit="processPayment(event)">
+                <div class="form-group"><label class="form-label">Cardholder Name</label><input type="text" class="form-input" id="cardName" placeholder="John Doe" required></div>
+                <div class="form-group"><label class="form-label">Card Number</label><div class="stripe-element" id="cardNumber">4242 4242 4242 4242</div></div>
+                <div class="grid-2" style="gap:0.75rem;">
+                    <div class="form-group"><label class="form-label">Expiry</label><div class="stripe-element" id="cardExpiry">12 / 26</div></div>
+                    <div class="form-group"><label class="form-label">CVC</label><div class="stripe-element" id="cardCvc">123</div></div>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-top:1rem; font-size:0.85rem; color:var(--text-secondary);"><span>🔒</span> Secured by Stripe. Demo mode — no real charge.</div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
+            <button class="btn btn-success" onclick="processPayment(event)" id="paySubmitBtn">Pay Now</button>
+        </div>
+    </div>
+</div>
 
 <!-- Auth View -->
 <div id="authView" class="auth-page">
@@ -1044,11 +547,9 @@
                     <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">
                         <input type="checkbox" id="rememberMe"> Remember me
                     </label>
-                    <a href="#" style="font-size:0.85rem; color:var(--primary); text-decoration:none;">Forgot password?</a>
+                    <button type="button" class="btn-link" onclick="showForgotPassword()">Forgot password?</button>
                 </div>
-                <button type="submit" class="btn btn-primary w-full" id="loginBtn">
-                    Sign In to Auction
-                </button>
+                <button type="submit" class="btn btn-primary w-full" id="loginBtn">Sign In to Auction</button>
             </form>
 
             <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
@@ -1086,9 +587,7 @@
                     <input type="checkbox" required style="margin-top:0.2rem;">
                     I agree to the Terms of Service and Privacy Policy
                 </label>
-                <button type="submit" class="btn btn-primary w-full" id="registerBtn">
-                    Create Account
-                </button>
+                <button type="submit" class="btn btn-primary w-full" id="registerBtn">Create Account</button>
             </form>
         </div>
     </div>
@@ -1155,7 +654,7 @@
     <div class="main-content">
         <div class="top-bar">
             <div style="display:flex; align-items:center; gap:1rem;">
-                <button class="btn btn-ghost" style="color:white; display:none;" id="menuToggle" onclick="toggleSidebar()">☰</button>
+                <button class="btn btn-ghost" style="color:white;" id="menuToggle" onclick="toggleSidebar()">☰</button>
                 <div class="brand" style="font-size:1.2rem;">
                     <span class="brand-icon">🐄</span>
                     LiveStock Auctions
@@ -1188,66 +687,6 @@
     </div>
 </div>
 
-<!-- Payment Modal -->
-<div class="modal-overlay" id="paymentModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h2>💳 Complete Payment</h2>
-            <button class="modal-close" onclick="closePaymentModal()">×</button>
-        </div>
-        <div class="modal-body">
-            <div class="payment-summary">
-                <div class="payment-line">
-                    <span>Winning Bid</span>
-                    <span class="font-mono" id="payBidAmount">$0.00</span>
-                </div>
-                <div class="payment-line">
-                    <span>Buyer's Premium (8%)</span>
-                    <span class="font-mono" id="payPremium">$0.00</span>
-                </div>
-                <div class="payment-line">
-                    <span>Transportation</span>
-                    <span class="font-mono">$350.00</span>
-                </div>
-                <div class="payment-line total">
-                    <span>Total Due</span>
-                    <span class="font-mono" id="payTotal">$0.00</span>
-                </div>
-            </div>
-            
-            <form id="paymentForm" onsubmit="processPayment(event)">
-                <div class="form-group">
-                    <label class="form-label">Cardholder Name</label>
-                    <input type="text" class="form-input" id="cardName" placeholder="John Doe" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Card Number</label>
-                    <div class="stripe-element" id="cardNumber">•••• •••• •••• ••••</div>
-                </div>
-                <div class="grid-2" style="gap:0.75rem;">
-                    <div class="form-group">
-                        <label class="form-label">Expiry</label>
-                        <div class="stripe-element" id="cardExpiry">MM / YY</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">CVC</label>
-                        <div class="stripe-element" id="cardCvc">•••</div>
-                    </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:0.5rem; margin-top:1rem; font-size:0.85rem; color:var(--text-secondary);">
-                    <span>🔒</span> Secured by Stripe. We never store your card details.
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
-            <button class="btn btn-success" onclick="processPayment(event)" id="paySubmitBtn">
-                Pay Now
-            </button>
-        </div>
-    </div>
-</div>
-
 <script>
 // ==================== STATE ====================
 const AppState = {
@@ -1275,13 +714,13 @@ const AppState = {
         location: 'Amarillo, TX'
     },
     lots: [
-        { id: 'A-1042', name: 'Black Angus Bull — "Thunder"', price: 4250, status: 'live', image: '🐂', tags: '18mo • 1,240lbs' },
-        { id: 'A-1043', name: 'Hereford Heifer — "Daisy"', price: 3200, status: 'upcoming', image: '🐄', tags: '14mo • 980lbs' },
-        { id: 'A-1044', name: 'Charolais Bull — "Blizzard"', price: 5100, status: 'upcoming', image: '🐂', tags: '20mo • 1,350lbs' },
-        { id: 'A-1045', name: 'Brahman Cow — "Sahara"', price: 2800, status: 'upcoming', image: '🐃', tags: '3yr • 1,100lbs' },
-        { id: 'A-1046', name: 'Simmental Pair', price: 6200, status: 'upcoming', image: '🐄', tags: 'Mixed • 2,100lbs' },
-        { id: 'A-1047', name: 'Texas Longhorn Steer', price: 1800, status: 'sold', image: '🐃', tags: '2yr • 1,450lbs', finalPrice: 2400 },
-        { id: 'A-1048', name: 'Red Angus Heifer', price: 2900, status: 'sold', image: '🐄', tags: '16mo • 1,050lbs', finalPrice: 3400 }
+        { id: 'A-1042', name: 'Black Angus Bull — "Thunder"', price: 4250, status: 'live', image: '🐂', tags: '18mo • 1,240lbs', seller: 'Triple-R Ranch' },
+        { id: 'A-1043', name: 'Hereford Heifer — "Daisy"', price: 3200, status: 'upcoming', image: '🐄', tags: '14mo • 980lbs', seller: 'Bar-W Ranch' },
+        { id: 'A-1044', name: 'Charolais Bull — "Blizzard"', price: 5100, status: 'upcoming', image: '🐂', tags: '20mo • 1,350lbs', seller: 'Frozen North Farm' },
+        { id: 'A-1045', name: 'Brahman Cow — "Sahara"', price: 2800, status: 'upcoming', image: '🐃', tags: '3yr • 1,100lbs', seller: 'Desert Wind Ranch' },
+        { id: 'A-1046', name: 'Simmental Pair', price: 6200, status: 'upcoming', image: '🐄', tags: 'Mixed • 2,100lbs', seller: 'Double-S Ranch' },
+        { id: 'A-1047', name: 'Texas Longhorn Steer', price: 1800, status: 'sold', image: '🐃', tags: '2yr • 1,450lbs', finalPrice: 2400, seller: 'Lone Star Cattle' },
+        { id: 'A-1048', name: 'Red Angus Heifer', price: 2900, status: 'sold', image: '🐄', tags: '16mo • 1,050lbs', finalPrice: 3400, seller: 'Red River Ranch' }
     ],
     bidHistory: [
         { id: 1, name: 'Rancher_Joe', amount: 4250, time: 'Just now', avatar: 'RJ', isYou: false },
@@ -1292,11 +731,17 @@ const AppState = {
     ],
     myBids: [],
     payments: [],
+    reminders: [],
     users: [],
     streamChannel: 'livestockauction',
     isAdmin: false,
     timerInterval: null,
-    simInterval: null
+    simInterval: null,
+    notifications: {
+        outbid: true,
+        reminders: true,
+        marketing: false
+    }
 };
 
 // ==================== UTILS ====================
@@ -1313,7 +758,6 @@ function showToast(message, type = 'success') {
     toast.className = `toast ${type}`;
     toast.textContent = message;
     container.appendChild(toast);
-    
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(20px)';
@@ -1321,11 +765,22 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
+// ==================== MODAL SYSTEM ====================
+function openModal(title, bodyHtml, footerHtml) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = bodyHtml;
+    document.getElementById('modalFooter').innerHTML = footerHtml || '';
+    document.getElementById('globalModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('globalModal').classList.remove('active');
+}
+
 // ==================== AUTH ====================
 function switchAuthTab(tab) {
     document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
     event.target.classList.add('active');
-    
     if (tab === 'login') {
         document.getElementById('loginForm').classList.remove('hidden');
         document.getElementById('registerForm').classList.add('hidden');
@@ -1335,30 +790,44 @@ function switchAuthTab(tab) {
     }
 }
 
+function showForgotPassword() {
+    openModal('🔑 Reset Password', `
+        <p style="margin-bottom:1rem; color:var(--text-secondary);">Enter your email and we'll send you a reset link.</p>
+        <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-input" id="resetEmail" placeholder="you@ranch.com" required>
+        </div>
+    `, `
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitReset()">Send Reset Link</button>
+    `);
+}
+
+function submitReset() {
+    const email = document.getElementById('resetEmail').value;
+    if (!email) { showToast('Please enter your email', 'error'); return; }
+    closeModal();
+    showToast(`Reset link sent to ${email}`, 'success');
+}
+
 function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
     const btn = document.getElementById('loginBtn');
-    
     btn.innerHTML = '<div class="spinner"></div> Signing in...';
     btn.disabled = true;
     
     setTimeout(() => {
         const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         const user = {
-            id: 'user_' + Date.now(),
-            email,
-            name,
-            role: 'bidder',
+            id: 'user_' + Date.now(), email, name, role: 'bidder',
             avatar: name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
             createdAt: new Date().toISOString()
         };
-        
         AppState.currentUser = user;
         AppState.isAdmin = false;
         completeLogin(user);
-        btn.innerHTML = 'Sign In to Auction';
-        btn.disabled = false;
+        btn.innerHTML = 'Sign In to Auction'; btn.disabled = false;
     }, 1200);
 }
 
@@ -1366,7 +835,6 @@ function handleRegister(e) {
     e.preventDefault();
     const btn = document.getElementById('registerBtn');
     const role = document.getElementById('regRole').value;
-    
     btn.innerHTML = '<div class="spinner"></div> Creating account...';
     btn.disabled = true;
     
@@ -1382,12 +850,10 @@ function handleRegister(e) {
             avatar: (firstName[0] + lastName[0]).toUpperCase(),
             createdAt: new Date().toISOString()
         };
-        
         AppState.currentUser = user;
         AppState.isAdmin = role === 'auctioneer';
         completeLogin(user);
-        btn.innerHTML = 'Create Account';
-        btn.disabled = false;
+        btn.innerHTML = 'Create Account'; btn.disabled = false;
     }, 1500);
 }
 
@@ -1411,26 +877,19 @@ function socialLogin(provider) {
 function completeLogin(user) {
     document.getElementById('authView').classList.add('hidden');
     document.getElementById('appView').classList.remove('hidden');
-    
     document.getElementById('headerUserName').textContent = user.name;
     document.getElementById('headerAvatar').textContent = user.avatar;
     document.getElementById('sidebarUserName').textContent = user.name;
     document.getElementById('sidebarUserRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
     document.getElementById('headerBalance').textContent = '$' + AppState.balance.toLocaleString('en-US', {minimumFractionDigits: 2});
-    
-    if (AppState.isAdmin) {
-        document.getElementById('auctioneerNav').style.display = 'block';
-    }
-    
+    if (AppState.isAdmin) document.getElementById('auctioneerNav').style.display = 'block';
     showToast(`Welcome back, ${user.name}!`, 'success');
     renderPage('live');
 }
 
 function logout() {
-    // Clear intervals
     if (AppState.timerInterval) clearInterval(AppState.timerInterval);
     if (AppState.simInterval) clearInterval(AppState.simInterval);
-    
     AppState.currentUser = null;
     AppState.isAdmin = false;
     document.getElementById('appView').classList.add('hidden');
@@ -1458,52 +917,26 @@ document.addEventListener('click', (e) => {
 function navigateTo(page) {
     AppState.currentPage = page;
     document.getElementById('userDropdown')?.classList.remove('active');
-    
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.toggle('active', item.dataset.page === page);
     });
-    
     renderPage(page);
 }
 
 function renderPage(page) {
     const container = document.getElementById('contentArea');
-    
     switch(page) {
-        case 'live':
-            container.innerHTML = renderLiveAuction();
-            initLiveAuction();
-            break;
-        case 'upcoming':
-            container.innerHTML = renderUpcomingLots();
-            break;
-        case 'results':
-            container.innerHTML = renderResults();
-            break;
-        case 'dashboard':
-            container.innerHTML = renderDashboard();
-            break;
-        case 'bids':
-            container.innerHTML = renderMyBids();
-            break;
-        case 'payments':
-            container.innerHTML = renderPayments();
-            break;
-        case 'settings':
-            container.innerHTML = renderSettings();
-            break;
-        case 'admin':
-            container.innerHTML = renderAdminPanel();
-            break;
-        case 'lots':
-            container.innerHTML = renderLotManagement();
-            break;
-        case 'analytics':
-            container.innerHTML = renderAnalytics();
-            break;
-        default:
-            container.innerHTML = renderLiveAuction();
-            initLiveAuction();
+        case 'live': container.innerHTML = renderLiveAuction(); initLiveAuction(); break;
+        case 'upcoming': container.innerHTML = renderUpcomingLots(); break;
+        case 'results': container.innerHTML = renderResults(); break;
+        case 'dashboard': container.innerHTML = renderDashboard(); break;
+        case 'bids': container.innerHTML = renderMyBids(); break;
+        case 'payments': container.innerHTML = renderPayments(); break;
+        case 'settings': container.innerHTML = renderSettings(); break;
+        case 'admin': container.innerHTML = renderAdminPanel(); break;
+        case 'lots': container.innerHTML = renderLotManagement(); break;
+        case 'analytics': container.innerHTML = renderAnalytics(); break;
+        default: container.innerHTML = renderLiveAuction(); initLiveAuction();
     }
 }
 
@@ -1514,7 +947,7 @@ function renderLiveAuction() {
         <div class="fade-in">
             <div style="margin-bottom:1.5rem;">
                 <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Live Auction Floor</h1>
-                <p style="color:var(--text-secondary);">Amarillo Livestock Exchange • Session #2026-05-07-A</p>
+                <p style="color:var(--text-secondary);">Amarillo Livestock Exchange • Session #2026-05-12-A</p>
             </div>
 
             <div class="grid-2" style="margin-bottom:2rem;">
@@ -1528,11 +961,9 @@ function renderLiveAuction() {
                     </div>
                     <div class="card-body">
                         <div class="video-container" id="videoContainer">
-                            <iframe 
-                                id="twitchPlayer"
+                            <iframe id="twitchPlayer"
                                 src="https://player.twitch.tv/?channel=${AppState.streamChannel}&parent=${window.location.hostname || 'localhost'}&muted=true" 
-                                allowfullscreen>
-                            </iframe>
+                                allowfullscreen></iframe>
                             <div class="stream-overlay">
                                 <div style="font-size:0.85rem; opacity:0.8;">Current Lot: ${lot.id}</div>
                                 <div style="font-size:1.25rem; font-weight:700;">${lot.name}</div>
@@ -1552,23 +983,18 @@ function renderLiveAuction() {
                 <div class="card">
                     <div class="card-header">
                         <span class="card-title">🔥 Lot ${lot.id}</span>
-                        <span class="countdown-box ${lot.timeRemaining <= 30 ? 'urgent' : ''}" id="countdown">
-                            ⏱ ${formatTime(lot.timeRemaining)}
-                        </span>
+                        <span class="countdown-box ${lot.timeRemaining <= 30 ? 'urgent' : ''}" id="countdown">⏱ ${formatTime(lot.timeRemaining)}</span>
                     </div>
                     <div class="card-body">
                         <div class="lot-hero" style="grid-template-columns:1fr; gap:1rem; margin-bottom:0;">
                             <div class="lot-gallery" style="height:200px;">${lot.images[0]}</div>
                         </div>
-                        
                         <h2 class="lot-title" style="font-size:1.5rem; margin-top:1rem;">${lot.name}</h2>
                         <p class="lot-subtitle">${lot.description}</p>
-                        
                         <div class="lot-tags">
                             ${lot.tags.map(t => `<span class="tag">${t.icon} ${t.label}</span>`).join('')}
                             <span class="tag primary">Seller: ${lot.seller}</span>
                         </div>
-
                         <div class="price-block">
                             <div class="price-label">Current Bid</div>
                             <div class="price-value" id="currentPrice">${formatMoney(lot.currentBid)}</div>
@@ -1577,7 +1003,6 @@ function renderLiveAuction() {
                                 <span>Reserve: ${formatMoney(lot.reservePrice)}</span>
                             </div>
                         </div>
-
                         <div class="bid-section">
                             <div class="quick-bids">
                                 <button class="quick-bid-btn" onclick="placeQuickBid(50)">+${formatMoney(50)}</button>
@@ -1618,7 +1043,7 @@ function renderLiveAuction() {
                 <div class="card-body">
                     <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.5rem;">
                         ${AppState.lots.filter(l => l.status === 'upcoming').slice(0, 4).map(lot => `
-                            <div style="min-width:200px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; cursor:pointer;" onclick="previewLot('${lot.id}')">
+                            <div style="min-width:200px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; cursor:pointer;" onclick="viewLotDetail('${lot.id}')">
                                 <div style="font-size:3rem; text-align:center; margin-bottom:0.5rem;">${lot.image}</div>
                                 <div style="font-weight:600; font-size:0.9rem; margin-bottom:0.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${lot.name}</div>
                                 <div style="font-size:0.8rem; color:var(--text-secondary);">${lot.tags}</div>
@@ -1654,7 +1079,6 @@ function renderUpcomingLots() {
                 <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Upcoming Lots</h1>
                 <p style="color:var(--text-secondary);">Preview and set reminders for future auctions</p>
             </div>
-            
             <div class="grid-3">
                 ${AppState.lots.filter(l => l.status === 'upcoming').map(lot => `
                     <div class="card" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
@@ -1669,12 +1093,26 @@ function renderUpcomingLots() {
                             <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">${lot.tags}</p>
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <span style="font-size:1.25rem; font-weight:800; color:var(--primary);">${formatMoney(lot.price)}</span>
-                                <button class="btn btn-sm btn-outline" onclick="setReminder('${lot.id}')">🔔 Remind</button>
+                                <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); setReminder('${lot.id}')">🔔 Remind</button>
                             </div>
+                            <button class="btn btn-sm btn-primary w-full mt-2" onclick="event.stopPropagation(); viewLotDetail('${lot.id}')">View Details</button>
                         </div>
                     </div>
                 `).join('')}
             </div>
+            ${AppState.reminders.length > 0 ? `
+                <div class="card mt-2">
+                    <div class="card-header"><span class="card-title">🔔 Your Reminders</span></div>
+                    <div class="card-body">
+                        ${AppState.reminders.map(r => `
+                            <div class="reminder-row">
+                                <div><strong>${r.name}</strong> <span style="color:var(--text-secondary); font-size:0.85rem;">(${r.id})</span></div>
+                                <button class="btn btn-sm btn-outline" onclick="removeReminder('${r.id}')">Remove</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
         </div>
     `;
 }
@@ -1682,24 +1120,19 @@ function renderUpcomingLots() {
 function renderResults() {
     return `
         <div class="fade-in">
-            <div style="margin-bottom:1.5rem;">
-                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Auction Results</h1>
-                <p style="color:var(--text-secondary);">Completed lots and final sale prices</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <div>
+                    <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Auction Results</h1>
+                    <p style="color:var(--text-secondary);">Completed lots and final sale prices</p>
+                </div>
+                <button class="btn btn-outline" onclick="exportResults()">📥 Export CSV</button>
             </div>
-            
             <div class="card">
                 <div class="card-body">
                     <div class="table-wrap">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Lot #</th>
-                                    <th>Animal</th>
-                                    <th>Details</th>
-                                    <th>Final Price</th>
-                                    <th>Winner</th>
-                                    <th>Status</th>
-                                </tr>
+                                <tr><th>Lot #</th><th>Animal</th><th>Details</th><th>Final Price</th><th>Winner</th><th>Status</th></tr>
                             </thead>
                             <tbody>
                                 ${AppState.lots.filter(l => l.status === 'sold').map(lot => `
@@ -1735,14 +1168,12 @@ function renderDashboard() {
     const totalBids = AppState.myBids.length;
     const totalSpent = AppState.myBids.reduce((sum, b) => sum + b.amount, 0);
     const wonLots = AppState.myBids.filter(b => b.won).length;
-    
     return `
         <div class="fade-in">
             <div style="margin-bottom:1.5rem;">
                 <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Dashboard</h1>
                 <p style="color:var(--text-secondary);">Overview of your auction activity</p>
             </div>
-            
             <div class="admin-grid">
                 <div class="stat-card">
                     <div class="stat-label">Active Bids</div>
@@ -1765,18 +1196,16 @@ function renderDashboard() {
                     <div class="stat-change up">Ready to bid</div>
                 </div>
             </div>
-
             <div class="grid-2">
                 <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">📈 Recent Activity</span>
-                    </div>
+                    <div class="card-header"><span class="card-title">📈 Recent Activity</span></div>
                     <div class="card-body">
                         ${AppState.myBids.length === 0 ? `
                             <div class="empty-state">
                                 <div class="icon">📭</div>
                                 <h3>No bids yet</h3>
                                 <p>Start bidding on live lots to see your activity here.</p>
+                                <button class="btn btn-primary mt-2" onclick="navigateTo('live')">Go to Live Auction</button>
                             </div>
                         ` : `
                             <div class="bid-feed">
@@ -1796,11 +1225,8 @@ function renderDashboard() {
                         `}
                     </div>
                 </div>
-
                 <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">🏆 Won Lots</span>
-                    </div>
+                    <div class="card-header"><span class="card-title">🏆 Won Lots</span></div>
                     <div class="card-body">
                         ${wonLots === 0 ? `
                             <div class="empty-state">
@@ -1811,16 +1237,16 @@ function renderDashboard() {
                         ` : `
                             <div class="table-wrap">
                                 <table>
-                                    <thead>
-                                        <tr><th>Lot</th><th>Price</th><th>Action</th></tr>
-                                    </thead>
+                                    <thead><tr><th>Lot</th><th>Price</th><th>Action</th></tr></thead>
                                     <tbody>
                                         ${AppState.myBids.filter(b => b.won).map(bid => `
                                             <tr>
                                                 <td style="font-weight:600;">${bid.lotName}</td>
                                                 <td style="font-weight:700; color:var(--success);">${formatMoney(bid.amount)}</td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-success" onclick="openPaymentModal(${bid.amount})">Pay</button>
+                                                    ${bid.paid 
+                                                        ? '<span style="font-size:0.85rem; color:var(--success); font-weight:600;">✓ Paid</span>'
+                                                        : `<button class="btn btn-sm btn-success" onclick="openPaymentModal(${bid.amount})">Pay</button>`}
                                                 </td>
                                             </tr>
                                         `).join('')}
@@ -1842,7 +1268,6 @@ function renderMyBids() {
                 <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">My Bids</h1>
                 <p style="color:var(--text-secondary);">History of all your auction activity</p>
             </div>
-            
             <div class="card">
                 <div class="card-body">
                     ${AppState.myBids.length === 0 ? `
@@ -1856,13 +1281,7 @@ function renderMyBids() {
                         <div class="table-wrap">
                             <table>
                                 <thead>
-                                    <tr>
-                                        <th>Lot</th>
-                                        <th>Amount</th>
-                                        <th>Time</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
+                                    <tr><th>Lot</th><th>Amount</th><th>Time</th><th>Status</th><th>Actions</th></tr>
                                 </thead>
                                 <tbody>
                                     ${AppState.myBids.map(bid => `
@@ -1871,9 +1290,7 @@ function renderMyBids() {
                                             <td style="font-weight:700; color:var(--primary);">${formatMoney(bid.amount)}</td>
                                             <td style="color:var(--text-secondary);">${bid.time}</td>
                                             <td>
-                                                ${bid.won 
-                                                    ? '<span class="badge badge-sold">Won</span>' 
-                                                    : '<span class="badge badge-pending">Outbid</span>'}
+                                                ${bid.won ? '<span class="badge badge-sold">Won</span>' : '<span class="badge badge-pending">Outbid</span>'}
                                             </td>
                                             <td>
                                                 ${bid.won && !bid.paid
@@ -1901,12 +1318,9 @@ function renderPayments() {
                 <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Payments & Wallet</h1>
                 <p style="color:var(--text-secondary);">Manage funds and view transaction history</p>
             </div>
-            
             <div class="grid-2">
                 <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">💳 Add Funds</span>
-                    </div>
+                    <div class="card-header"><span class="card-title">💳 Add Funds</span></div>
                     <div class="card-body">
                         <div class="form-group">
                             <label class="form-label">Amount to Add</label>
@@ -1921,19 +1335,12 @@ function renderPayments() {
                             <button class="btn btn-outline" onclick="setAddFunds(1000)">$1,000</button>
                             <button class="btn btn-outline" onclick="setAddFunds(5000)">$5,000</button>
                         </div>
-                        <button class="btn btn-primary w-full" onclick="addFunds()">
-                            Add Funds via Stripe
-                        </button>
-                        <p style="margin-top:0.75rem; font-size:0.8rem; color:var(--text-secondary); text-align:center;">
-                            Demo mode — funds added instantly without real charge
-                        </p>
+                        <button class="btn btn-primary w-full" onclick="addFunds()">Add Funds via Stripe</button>
+                        <p style="margin-top:0.75rem; font-size:0.8rem; color:var(--text-secondary); text-align:center;">Demo mode — funds added instantly without real charge</p>
                     </div>
                 </div>
-
                 <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">📜 Transaction History</span>
-                    </div>
+                    <div class="card-header"><span class="card-title">📜 Transaction History</span></div>
                     <div class="card-body">
                         ${AppState.payments.length === 0 ? `
                             <div class="empty-state" style="padding:2rem;">
@@ -1944,9 +1351,7 @@ function renderPayments() {
                         ` : `
                             <div class="table-wrap">
                                 <table>
-                                    <thead>
-                                        <tr><th>Date</th><th>Type</th><th>Amount</th><th>Status</th></tr>
-                                    </thead>
+                                    <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
                                     <tbody>
                                         ${AppState.payments.map(p => `
                                             <tr>
@@ -1981,65 +1386,60 @@ function renderSettings() {
                 <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Settings</h1>
                 <p style="color:var(--text-secondary);">Manage your account preferences</p>
             </div>
-            
             <div class="grid-2">
                 <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">👤 Profile</span>
-                    </div>
+                    <div class="card-header"><span class="card-title">👤 Profile</span></div>
                     <div class="card-body">
                         <form onsubmit="saveSettings(event)">
                             <div class="grid-2" style="gap:0.75rem;">
                                 <div class="form-group">
                                     <label class="form-label">First Name</label>
-                                    <input type="text" class="form-input" value="${user.name?.split(' ')[0] || ''}">
+                                    <input type="text" class="form-input" id="setFirstName" value="${user.name?.split(' ')[0] || ''}" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Last Name</label>
-                                    <input type="text" class="form-input" value="${user.name?.split(' ')[1] || ''}">
+                                    <input type="text" class="form-input" id="setLastName" value="${user.name?.split(' ')[1] || ''}" required>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Email</label>
-                                <input type="email" class="form-input" value="${user.email || ''}">
+                                <input type="email" class="form-input" id="setEmail" value="${user.email || ''}" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Phone</label>
-                                <input type="tel" class="form-input" value="${user.phone || ''}">
+                                <input type="tel" class="form-input" id="setPhone" value="${user.phone || ''}">
                             </div>
                             <button type="submit" class="btn btn-primary">Save Changes</button>
                         </form>
                     </div>
                 </div>
-
                 <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">🔔 Notifications</span>
-                    </div>
+                    <div class="card-header"><span class="card-title">🔔 Notifications</span></div>
                     <div class="card-body">
                         <div style="display:flex; flex-direction:column; gap:1rem;">
                             <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer;">
-                                <input type="checkbox" checked style="width:18px; height:18px;">
+                                <input type="checkbox" id="notifOutbid" ${AppState.notifications.outbid ? 'checked' : ''} style="width:18px; height:18px;">
                                 <div>
                                     <div style="font-weight:600;">Outbid Alerts</div>
                                     <div style="font-size:0.85rem; color:var(--text-secondary);">SMS when someone outbids you</div>
                                 </div>
                             </label>
                             <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer;">
-                                <input type="checkbox" checked style="width:18px; height:18px;">
+                                <input type="checkbox" id="notifReminders" ${AppState.notifications.reminders ? 'checked' : ''} style="width:18px; height:18px;">
                                 <div>
                                     <div style="font-weight:600;">Auction Reminders</div>
                                     <div style="font-size:0.85rem; color:var(--text-secondary);">15 min before lots you're watching</div>
                                 </div>
                             </label>
                             <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer;">
-                                <input type="checkbox" style="width:18px; height:18px;">
+                                <input type="checkbox" id="notifMarketing" ${AppState.notifications.marketing ? 'checked' : ''} style="width:18px; height:18px;">
                                 <div>
                                     <div style="font-weight:600;">Marketing Emails</div>
                                     <div style="font-size:0.85rem; color:var(--text-secondary);">New auctions and featured lots</div>
                                 </div>
                             </label>
                         </div>
+                        <button class="btn btn-primary w-full mt-2" onclick="saveNotificationSettings()">Save Notification Preferences</button>
                     </div>
                 </div>
             </div>
@@ -2055,7 +1455,6 @@ function renderAdminPanel() {
                 <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Auctioneer Control Panel</h1>
                 <p style="color:var(--text-secondary);">Manage the live auction session</p>
             </div>
-
             <div class="admin-grid">
                 <div class="stat-card">
                     <div class="stat-label">Current Lot</div>
@@ -2078,7 +1477,6 @@ function renderAdminPanel() {
                     <div class="stat-change up">↑ 12% this hour</div>
                 </div>
             </div>
-
             <div class="control-panel">
                 <h3>🎛️ Session Controls</h3>
                 <div class="control-row">
@@ -2117,23 +1515,16 @@ function renderAdminPanel() {
                     <button class="btn btn-danger" onclick="adminPassLot()">⏭ Pass Lot</button>
                 </div>
             </div>
-
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">📋 Live Bid Feed (Auctioneer View)</span>
-                    <span style="font-size:0.85rem; color:var(--text-secondary);">Real-time with bidder IDs</span>
+                    <span style="font-size:0.85rem; color:var(--text-secondary);">Click Accept to set as winning bid</span>
                 </div>
                 <div class="card-body">
                     <div class="table-wrap">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Bidder</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Action</th>
-                                </tr>
+                                <tr><th>Time</th><th>Bidder</th><th>Amount</th><th>Method</th><th>Action</th></tr>
                             </thead>
                             <tbody>
                                 ${AppState.bidHistory.map(bid => `
@@ -2147,7 +1538,7 @@ function renderAdminPanel() {
                                         </td>
                                         <td style="font-weight:700; color:var(--primary);">${formatMoney(bid.amount)}</td>
                                         <td><span class="badge badge-live">Live</span></td>
-                                        <td><button class="btn btn-sm btn-outline">Accept</button></td>
+                                        <td><button class="btn btn-sm btn-outline" onclick="adminAcceptBid(${bid.amount}, '${bid.name}')">Accept</button></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -2169,19 +1560,12 @@ function renderLotManagement() {
                 </div>
                 <button class="btn btn-primary" onclick="showAddLotForm()">+ Add New Lot</button>
             </div>
-            
             <div class="card">
                 <div class="card-body">
                     <div class="table-wrap">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Lot #</th>
-                                    <th>Name</th>
-                                    <th>Starting</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
+                                <tr><th>Lot #</th><th>Name</th><th>Starting</th><th>Status</th><th>Actions</th></tr>
                             </thead>
                             <tbody>
                                 ${AppState.lots.map(lot => `
@@ -2197,13 +1581,14 @@ function renderLotManagement() {
                                         <td>
                                             ${lot.status === 'live' ? '<span class="badge badge-live">● Live</span>' :
                                               lot.status === 'upcoming' ? '<span class="badge badge-upcoming">Upcoming</span>' :
+                                              lot.status === 'passed' ? '<span class="badge badge-passed">Passed</span>' :
                                               '<span class="badge badge-sold">Sold</span>'}
                                         </td>
                                         <td>
                                             <div class="table-actions">
-                                                <button class="btn btn-sm btn-outline">Edit</button>
-                                                ${lot.status === 'upcoming' ? '<button class="btn btn-sm btn-primary" onclick="goLive(\''+lot.id+'\')">Go Live</button>' : ''}
-                                                <button class="btn btn-sm btn-danger">Delete</button>
+                                                <button class="btn btn-sm btn-outline" onclick="editLot('${lot.id}')">Edit</button>
+                                                ${lot.status === 'upcoming' ? `<button class="btn btn-sm btn-primary" onclick="goLive('${lot.id}')">Go Live</button>` : ''}
+                                                <button class="btn btn-sm btn-danger" onclick="deleteLot('${lot.id}')">Delete</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -2218,27 +1603,28 @@ function renderLotManagement() {
 }
 
 function renderAnalytics() {
+    const revenue = AppState.lots.filter(l => l.status === 'sold').reduce((sum, l) => sum + (l.finalPrice || 0), 0);
+    const sold = AppState.lots.filter(l => l.status === 'sold').length;
     return `
         <div class="fade-in">
             <div style="margin-bottom:1.5rem;">
                 <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Analytics</h1>
                 <p style="color:var(--text-secondary);">Session performance and revenue</p>
             </div>
-            
             <div class="admin-grid">
                 <div class="stat-card">
                     <div class="stat-label">Total Revenue</div>
-                    <div class="stat-value">${formatMoney(124500)}</div>
+                    <div class="stat-value">${formatMoney(revenue)}</div>
                     <div class="stat-change up">↑ 18% vs last session</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Lots Sold</div>
-                    <div class="stat-value">42</div>
+                    <div class="stat-value">${sold}</div>
                     <div class="stat-change up">↑ 5 this hour</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Avg. Sale Price</div>
-                    <div class="stat-value">${formatMoney(2964)}</div>
+                    <div class="stat-value">${formatMoney(sold > 0 ? Math.round(revenue/sold) : 0)}</div>
                     <div class="stat-change down">↓ 3% vs avg</div>
                 </div>
                 <div class="stat-card">
@@ -2247,11 +1633,8 @@ function renderAnalytics() {
                     <div class="stat-change up">↑ 24 new today</div>
                 </div>
             </div>
-
             <div class="card">
-                <div class="card-header">
-                    <span class="card-title">📊 Session Overview</span>
-                </div>
+                <div class="card-header"><span class="card-title">📊 Session Overview</span></div>
                 <div class="card-body">
                     <div style="display:flex; gap:2rem; margin-bottom:1.5rem; flex-wrap:wrap;">
                         <div style="flex:1; min-width:200px;">
@@ -2284,7 +1667,6 @@ function renderAnalytics() {
 
 // ==================== AUCTION LOGIC ====================
 function initLiveAuction() {
-    // Timer
     if (AppState.timerInterval) clearInterval(AppState.timerInterval);
     AppState.timerInterval = setInterval(() => {
         if (AppState.currentLot.timeRemaining > 0) {
@@ -2293,18 +1675,15 @@ function initLiveAuction() {
             const adm = document.getElementById('adminTimer');
             if (cd) {
                 cd.textContent = '⏱ ' + formatTime(AppState.currentLot.timeRemaining);
-                if (AppState.currentLot.timeRemaining <= 30) {
-                    cd.classList.add('urgent');
-                }
+                if (AppState.currentLot.timeRemaining <= 30) cd.classList.add('urgent');
             }
             if (adm) adm.textContent = formatTime(AppState.currentLot.timeRemaining);
         } else {
-            document.getElementById('countdown')?.classList.add('urgent');
-            document.getElementById('countdown') && (document.getElementById('countdown').textContent = '⏱ CLOSED');
+            const cd = document.getElementById('countdown');
+            if (cd) { cd.classList.add('urgent'); cd.textContent = '⏱ CLOSED'; }
         }
     }, 1000);
 
-    // Simulated bidders
     if (AppState.simInterval) clearInterval(AppState.simInterval);
     AppState.simInterval = setInterval(simulateBidding, 8000);
 }
@@ -2341,7 +1720,6 @@ function placeQuickBid(increment) {
 function placeCustomBid() {
     const input = document.getElementById('customBid');
     const amount = parseInt(input.value);
-    
     if (!amount || amount <= AppState.currentLot.currentBid) {
         showToast(`Bid must exceed ${formatMoney(AppState.currentLot.currentBid)}`, 'error');
         return;
@@ -2367,41 +1745,31 @@ function processBid(amount, isBuyNow = false) {
     const lot = AppState.currentLot;
     lot.currentBid = amount;
     
-    // Record bid
     const bid = {
-        id: Date.now(),
-        name: 'You',
-        amount: amount,
-        time: 'Just now',
-        avatar: 'YO',
-        isYou: true,
-        lotName: lot.name,
-        won: isBuyNow,
-        paid: false
+        id: Date.now(), name: 'You', amount: amount, time: 'Just now',
+        avatar: 'YO', isYou: true, lotName: lot.name, won: isBuyNow, paid: false
     };
     
     AppState.bidHistory.unshift(bid);
     AppState.myBids.unshift(bid);
     if (AppState.bidHistory.length > 20) AppState.bidHistory.pop();
     
-    // Update UI
     const priceEl = document.getElementById('currentPrice');
     if (priceEl) priceEl.textContent = formatMoney(amount);
     
     const historyEl = document.getElementById('bidHistoryContainer');
     if (historyEl) historyEl.innerHTML = renderBidHistory();
     
-    // Reset timer on activity
     lot.timeRemaining = Math.min(lot.timeRemaining + 15, 180);
     
     const msg = isBuyNow 
         ? `🏆 You won ${lot.name} for ${formatMoney(amount)}! Proceed to payment.` 
         : `Bid placed: ${formatMoney(amount)}`;
-    showToast(msg, isBuyNow ? 'success' : 'success');
+    showToast(msg, 'success');
     
     if (isBuyNow) {
-        document.getElementById('buyNowBtn').disabled = true;
-        document.getElementById('buyNowBtn').textContent = '✅ Sold to You';
+        const btn = document.getElementById('buyNowBtn');
+        if (btn) { btn.disabled = true; btn.textContent = '✅ Sold to You'; }
         setTimeout(() => openPaymentModal(amount), 1000);
     }
 }
@@ -2418,12 +1786,8 @@ function simulateBidding() {
     lot.currentBid = amount;
     
     const bid = {
-        id: Date.now(),
-        name: name,
-        amount: amount,
-        time: 'Just now',
-        avatar: name.split('_').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
-        isYou: false
+        id: Date.now(), name: name, amount: amount, time: 'Just now',
+        avatar: name.split('_').map(w => w[0]).join('').substring(0, 2).toUpperCase(), isYou: false
     };
     
     AppState.bidHistory.unshift(bid);
@@ -2438,12 +1802,57 @@ function simulateBidding() {
     lot.timeRemaining = Math.min(lot.timeRemaining + 10, 180);
 }
 
-function setReminder(lotId) {
-    showToast(`🔔 Reminder set for Lot ${lotId}. We'll notify you 15 minutes before.`, 'success');
+function viewLotDetail(id) {
+    const lot = AppState.lots.find(l => l.id === id);
+    if (!lot) return;
+    openModal(`📋 Lot ${lot.id} Details`, `
+        <div style="text-align:center; font-size:4rem; margin-bottom:1rem;">${lot.image}</div>
+        <h2 style="text-align:center; margin-bottom:0.5rem;">${lot.name}</h2>
+        <p style="text-align:center; color:var(--text-secondary); margin-bottom:1rem;">${lot.tags}</p>
+        <div style="background:#FAFAFA; border-radius:var(--radius-sm); padding:1rem; margin-bottom:1rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;"><span>Starting Bid</span><strong>${formatMoney(lot.price)}</strong></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;"><span>Seller</span><strong>${lot.seller || 'Unknown'}</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span>Status</span><strong>${lot.status.toUpperCase()}</strong></div>
+        </div>
+    `, `
+        <button class="btn btn-outline" onclick="closeModal()">Close</button>
+        ${lot.status === 'upcoming' ? `<button class="btn btn-primary" onclick="closeModal(); setReminder('${lot.id}')">🔔 Set Reminder</button>` : ''}
+        ${AppState.isAdmin && lot.status === 'upcoming' ? `<button class="btn btn-success" onclick="closeModal(); goLive('${lot.id}')">▶ Go Live</button>` : ''}
+    `);
 }
 
-function previewLot(id) {
-    showToast(`Preview: Lot ${id} — feature coming in v2`, 'warning');
+function setReminder(lotId) {
+    const lot = AppState.lots.find(l => l.id === lotId);
+    if (!lot) return;
+    if (AppState.reminders.find(r => r.id === lotId)) {
+        showToast('Reminder already set for this lot', 'warning');
+        return;
+    }
+    AppState.reminders.push({ id: lotId, name: lot.name, time: new Date().toLocaleString() });
+    showToast(`🔔 Reminder set for ${lot.name}. We'll notify you 15 minutes before.`, 'success');
+    if (AppState.currentPage === 'upcoming') renderPage('upcoming');
+}
+
+function removeReminder(lotId) {
+    AppState.reminders = AppState.reminders.filter(r => r.id !== lotId);
+    showToast('Reminder removed', 'success');
+    renderPage('upcoming');
+}
+
+function exportResults() {
+    const sold = AppState.lots.filter(l => l.status === 'sold');
+    let csv = 'Lot ID,Name,Tags,Final Price,Winner\n';
+    sold.forEach(l => {
+        csv += `${l.id},"${l.name}","${l.tags}",${l.finalPrice},Rancher_Joe\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'auction_results_2026-05-12.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+    showToast('Results exported to CSV', 'success');
 }
 
 // ==================== PAYMENTS ====================
@@ -2457,21 +1866,15 @@ function addFunds() {
         showToast('Please enter a valid amount', 'error');
         return;
     }
-    
-    // Simulate Stripe processing
     showToast('Processing payment...', 'success');
     setTimeout(() => {
         AppState.balance += amount;
         AppState.payments.unshift({
-            id: Date.now(),
-            type: 'deposit',
-            amount: amount,
-            date: new Date().toLocaleDateString(),
-            status: 'complete'
+            id: Date.now(), type: 'deposit', amount: amount,
+            date: new Date().toLocaleDateString(), status: 'complete'
         });
-        
         document.getElementById('headerBalance').textContent = '$' + AppState.balance.toLocaleString('en-US', {minimumFractionDigits: 2});
-        showToast(`Successfully added ${formatMoney(amount)} to your account!`, 'success');
+        showToast(`Successfully added ${formatMoney(amount)}!`, 'success');
         renderPage('payments');
     }, 1500);
 }
@@ -2480,7 +1883,6 @@ function openPaymentModal(bidAmount) {
     const premium = Math.round(bidAmount * 0.08);
     const transport = 350;
     const total = bidAmount + premium + transport;
-    
     document.getElementById('payBidAmount').textContent = formatMoney(bidAmount);
     document.getElementById('payPremium').textContent = formatMoney(premium);
     document.getElementById('payTotal').textContent = formatMoney(total);
@@ -2493,38 +1895,51 @@ function closePaymentModal() {
 
 function processPayment(e) {
     if (e) e.preventDefault();
-    
     const btn = document.getElementById('paySubmitBtn');
     btn.innerHTML = '<div class="spinner"></div> Processing...';
     btn.disabled = true;
     
     setTimeout(() => {
-        // Mark bid as paid
         AppState.myBids.forEach(b => { if (b.won && !b.paid) b.paid = true; });
-        
-        // Deduct from balance
         const totalText = document.getElementById('payTotal').textContent.replace(/[$,]/g, '');
         AppState.balance -= parseInt(totalText);
         document.getElementById('headerBalance').textContent = '$' + AppState.balance.toLocaleString('en-US', {minimumFractionDigits: 2});
-        
-        // Record payment
         AppState.payments.unshift({
-            id: Date.now(),
-            type: 'payment',
-            amount: parseInt(totalText),
-            date: new Date().toLocaleDateString(),
-            status: 'complete'
+            id: Date.now(), type: 'payment', amount: parseInt(totalText),
+            date: new Date().toLocaleDateString(), status: 'complete'
         });
-        
         closePaymentModal();
-        btn.innerHTML = 'Pay Now';
-        btn.disabled = false;
+        btn.innerHTML = 'Pay Now'; btn.disabled = false;
         showToast('✅ Payment successful! Receipt emailed.', 'success');
-        
-        if (AppState.currentPage === 'dashboard' || AppState.currentPage === 'bids') {
-            renderPage(AppState.currentPage);
-        }
+        if (AppState.currentPage === 'dashboard' || AppState.currentPage === 'bids') renderPage(AppState.currentPage);
     }, 2000);
+}
+
+// ==================== SETTINGS ====================
+function saveSettings(e) {
+    e.preventDefault();
+    const first = document.getElementById('setFirstName').value;
+    const last = document.getElementById('setLastName').value;
+    const email = document.getElementById('setEmail').value;
+    const phone = document.getElementById('setPhone').value;
+    
+    AppState.currentUser.name = `${first} ${last}`;
+    AppState.currentUser.email = email;
+    AppState.currentUser.phone = phone;
+    AppState.currentUser.avatar = (first[0] + last[0]).toUpperCase();
+    
+    document.getElementById('headerUserName').textContent = AppState.currentUser.name;
+    document.getElementById('headerAvatar').textContent = AppState.currentUser.avatar;
+    document.getElementById('sidebarUserName').textContent = AppState.currentUser.name;
+    
+    showToast('Profile settings saved', 'success');
+}
+
+function saveNotificationSettings() {
+    AppState.notifications.outbid = document.getElementById('notifOutbid').checked;
+    AppState.notifications.reminders = document.getElementById('notifReminders').checked;
+    AppState.notifications.marketing = document.getElementById('notifMarketing').checked;
+    showToast('Notification preferences saved', 'success');
 }
 
 // ==================== ADMIN ACTIONS ====================
@@ -2539,7 +1954,15 @@ function adminUpdateLot() {
     const newChannel = document.getElementById('adminChannel').value;
     if (newChannel && newChannel !== AppState.streamChannel) {
         AppState.streamChannel = newChannel;
-        document.getElementById('twitchPlayer').src = `https://player.twitch.tv/?channel=${newChannel}&parent=${window.location.hostname || 'localhost'}&muted=true`;
+        const iframe = document.getElementById('twitchPlayer');
+        if (iframe) iframe.src = `https://player.twitch.tv/?channel=${newChannel}&parent=${window.location.hostname || 'localhost'}&muted=true`;
+    }
+    
+    // Sync to lots array
+    const idx = AppState.lots.findIndex(l => l.id === lot.id || (l.status === 'live' && lot.status === 'live'));
+    if (idx >= 0) {
+        AppState.lots[idx].price = lot.currentBid;
+        AppState.lots[idx].id = lot.id;
     }
     
     showToast('Lot settings updated', 'success');
@@ -2552,13 +1975,20 @@ function adminExtendTimer(seconds) {
     renderPage('admin');
 }
 
+function adminAcceptBid(amount, bidder) {
+    AppState.currentLot.currentBid = amount;
+    showToast(`Accepted ${formatMoney(amount)} from ${bidder}`, 'success');
+    const priceEl = document.getElementById('currentPrice');
+    if (priceEl) priceEl.textContent = formatMoney(amount);
+    renderPage('admin');
+}
+
 function adminCloseLot() {
     clearInterval(AppState.timerInterval);
     clearInterval(AppState.simInterval);
     AppState.currentLot.timeRemaining = 0;
     AppState.currentLot.status = 'sold';
     
-    // Move to sold in lots array
     const lotIdx = AppState.lots.findIndex(l => l.id === AppState.currentLot.id);
     if (lotIdx >= 0) {
         AppState.lots[lotIdx].status = 'sold';
@@ -2567,17 +1997,12 @@ function adminCloseLot() {
     
     showToast('🔨 LOT SOLD! Moving to next...', 'success');
     setTimeout(() => {
-        // Auto-advance to next upcoming
         const next = AppState.lots.find(l => l.status === 'upcoming');
         if (next) {
             AppState.currentLot = {
                 ...AppState.currentLot,
-                id: next.id,
-                name: next.name,
-                currentBid: next.price,
-                startingBid: next.price,
-                timeRemaining: 180,
-                status: 'live',
+                id: next.id, name: next.name, currentBid: next.price,
+                startingBid: next.price, timeRemaining: 180, status: 'live',
                 images: [next.image],
                 tags: next.tags.split(' • ').map((t, i) => ({ label: t, icon: ['🎂','⚖️','🏷️','💉'][i] || '📋' }))
             };
@@ -2585,50 +2010,184 @@ function adminCloseLot() {
             renderPage('admin');
             initLiveAuction();
             showToast(`Now selling: ${next.name}`, 'success');
+        } else {
+            showToast('No more lots in queue', 'warning');
         }
     }, 2000);
 }
 
 function adminPassLot() {
     AppState.currentLot.status = 'passed';
+    const lotIdx = AppState.lots.findIndex(l => l.id === AppState.currentLot.id);
+    if (lotIdx >= 0) AppState.lots[lotIdx].status = 'passed';
     showToast('Lot passed. Moving to next...', 'warning');
-    adminCloseLot(); // Reuse advancement logic
+    adminCloseLot();
 }
 
 function goLive(lotId) {
     const lot = AppState.lots.find(l => l.id === lotId);
     if (!lot) return;
     
+    // Mark current live as passed/sold if exists
+    const current = AppState.lots.find(l => l.status === 'live');
+    if (current) current.status = 'passed';
+    
     AppState.currentLot = {
         ...AppState.currentLot,
-        id: lot.id,
-        name: lot.name,
-        currentBid: lot.price,
-        startingBid: lot.price,
-        timeRemaining: 180,
-        status: 'live',
+        id: lot.id, name: lot.name, currentBid: lot.price,
+        startingBid: lot.price, timeRemaining: 180, status: 'live',
         images: [lot.image],
         tags: lot.tags.split(' • ').map((t, i) => ({ label: t, icon: ['🎂','⚖️','🏷️','💉'][i] || '📋' }))
     };
-    
     lot.status = 'live';
     showToast(`${lot.name} is now LIVE!`, 'success');
     navigateTo('live');
 }
 
 function showAddLotForm() {
-    showToast('Add Lot form would open here (MVP demo)', 'warning');
+    openModal('+ Add New Lot', `
+        <div class="form-group">
+            <label class="form-label">Lot ID</label>
+            <input type="text" class="form-input" id="newLotId" placeholder="A-1050" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Animal Name</label>
+            <input type="text" class="form-input" id="newLotName" placeholder="e.g. Hereford Bull — Rex" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Starting Bid ($)</label>
+            <input type="number" class="form-input" id="newLotPrice" placeholder="3000" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Tags (comma separated)</label>
+            <input type="text" class="form-input" id="newLotTags" placeholder="24mo, 1,200lbs, Registered">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Seller Name</label>
+            <input type="text" class="form-input" id="newLotSeller" placeholder="Ranch Name">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Emoji Icon</label>
+            <select class="form-select" id="newLotIcon">
+                <option value="🐂">🐂 Bull</option>
+                <option value="🐄">🐄 Cow</option>
+                <option value="🐃">🐃 Buffalo</option>
+                <option value="🐑">🐑 Sheep</option>
+                <option value="🐐">🐐 Goat</option>
+            </select>
+        </div>
+    `, `
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitNewLot()">Create Lot</button>
+    `);
 }
 
-// ==================== SETTINGS ====================
-function saveSettings(e) {
-    e.preventDefault();
-    showToast('Profile settings saved', 'success');
+function submitNewLot() {
+    const id = document.getElementById('newLotId').value;
+    const name = document.getElementById('newLotName').value;
+    const price = parseInt(document.getElementById('newLotPrice').value);
+    const tags = document.getElementById('newLotTags').value || 'N/A';
+    const seller = document.getElementById('newLotSeller').value || 'Unknown';
+    const icon = document.getElementById('newLotIcon').value;
+    
+    if (!id || !name || !price) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    AppState.lots.push({
+        id, name, price, status: 'upcoming', image: icon,
+        tags: tags.split(',').map(t => t.trim()).join(' • '),
+        seller
+    });
+    
+    closeModal();
+    showToast(`Lot ${id} created successfully`, 'success');
+    renderPage('lots');
+}
+
+function editLot(lotId) {
+    const lot = AppState.lots.find(l => l.id === lotId);
+    if (!lot) return;
+    
+    openModal('✏️ Edit Lot', `
+        <div class="form-group">
+            <label class="form-label">Lot ID</label>
+            <input type="text" class="form-input" id="editLotId" value="${lot.id}" disabled>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Animal Name</label>
+            <input type="text" class="form-input" id="editLotName" value="${lot.name}" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Starting Bid ($)</label>
+            <input type="number" class="form-input" id="editLotPrice" value="${lot.price}" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Tags</label>
+            <input type="text" class="form-input" id="editLotTags" value="${lot.tags}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="editLotStatus">
+                <option value="upcoming" ${lot.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+                <option value="live" ${lot.status === 'live' ? 'selected' : ''}>Live</option>
+                <option value="sold" ${lot.status === 'sold' ? 'selected' : ''}>Sold</option>
+                <option value="passed" ${lot.status === 'passed' ? 'selected' : ''}>Passed</option>
+            </select>
+        </div>
+    `, `
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitEditLot('${lotId}')">Save Changes</button>
+    `);
+}
+
+function submitEditLot(lotId) {
+    const lot = AppState.lots.find(l => l.id === lotId);
+    if (!lot) return;
+    
+    lot.name = document.getElementById('editLotName').value;
+    lot.price = parseInt(document.getElementById('editLotPrice').value);
+    lot.tags = document.getElementById('editLotTags').value;
+    lot.status = document.getElementById('editLotStatus').value;
+    
+    if (lot.status === 'live') {
+        // If setting this live, update currentLot
+        goLive(lotId);
+    }
+    
+    closeModal();
+    showToast(`Lot ${lotId} updated`, 'success');
+    renderPage('lots');
+}
+
+function deleteLot(lotId) {
+    const lot = AppState.lots.find(l => l.id === lotId);
+    if (!lot) return;
+    if (lot.status === 'live') {
+        showToast('Cannot delete a live lot. Close it first.', 'error');
+        return;
+    }
+    
+    openModal('⚠️ Confirm Delete', `
+        <p>Are you sure you want to delete <strong>${lot.name}</strong> (${lotId})?</p>
+        <p style="color:var(--danger); font-size:0.9rem; margin-top:0.5rem;">This action cannot be undone.</p>
+    `, `
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDeleteLot('${lotId}')">Delete Lot</button>
+    `);
+}
+
+function confirmDeleteLot(lotId) {
+    AppState.lots = AppState.lots.filter(l => l.id !== lotId);
+    AppState.reminders = AppState.reminders.filter(r => r.id !== lotId);
+    closeModal();
+    showToast(`Lot ${lotId} deleted`, 'success');
+    renderPage('lots');
 }
 
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Check for demo auto-login
     if (window.location.hash === '#demo') {
         setTimeout(() => {
             document.getElementById('loginEmail').value = 'demo@ranch.com';
