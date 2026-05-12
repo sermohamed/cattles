@@ -3,327 +3,611 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiveStock Auctions — Live Cattle Bidding</title>
+    <title>LiveStock Auctions — Professional Cattle Trading Platform</title>
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
             --primary: #8B4513;
             --primary-dark: #5D2E0C;
+            --primary-light: #A0522D;
             --accent: #D2691E;
             --success: #2E7D32;
+            --success-light: #E8F5E9;
             --danger: #C62828;
+            --danger-light: #FFEBEE;
+            --warning: #F9A825;
             --bg: #F5F5DC;
-            --card: #FFFFFF;
+            --surface: #FFFFFF;
             --text: #2C1810;
-            --text-light: #6D4C41;
+            --text-secondary: #6D4C41;
             --border: #D7CCC8;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow: 0 4px 12px rgba(0,0,0,0.12);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
+            --radius: 12px;
+            --radius-sm: 8px;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
+            min-height: 100vh;
         }
 
-        /* Header */
-        header {
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .fade-in { animation: fadeIn 0.4s ease; }
+        .slide-in { animation: slideIn 0.3s ease; }
+
+        .app { display: flex; min-height: 100vh; }
+        .main-content { flex: 1; display: flex; flex-direction: column; }
+
+        .top-bar {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 100;
         }
 
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
+        .brand {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .logo {
-            font-size: 1.5rem;
+            gap: 0.75rem;
+            font-size: 1.4rem;
             font-weight: 800;
             letter-spacing: -0.5px;
-            display: flex;
+        }
+
+        .brand-icon { font-size: 1.8rem; }
+
+        .live-indicator {
+            display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logo::before {
-            content: "🐄";
-            font-size: 1.8rem;
-        }
-
-        .live-badge {
+            gap: 0.4rem;
             background: var(--danger);
-            color: white;
-            padding: 0.25rem 0.75rem;
+            padding: 0.3rem 0.9rem;
             border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
             animation: pulse 2s infinite;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
         }
 
-        .live-badge::before {
+        .live-indicator::before {
             content: "";
-            width: 8px;
-            height: 8px;
+            width: 8px; height: 8px;
             background: white;
             border-radius: 50%;
-            display: inline-block;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .user-info {
+        .top-actions {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            font-size: 0.9rem;
+            gap: 1.25rem;
         }
 
-        .balance {
+        .balance-chip {
             background: rgba(255,255,255,0.15);
             padding: 0.5rem 1rem;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            backdrop-filter: blur(10px);
         }
 
-        /* Layout */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .user-menu { position: relative; }
+
+        .user-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .user-btn:hover { background: rgba(255,255,255,0.2); }
+
+        .dropdown {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s;
+            z-index: 200;
+        }
+
+        .dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            transition: background 0.15s;
+        }
+
+        .dropdown-item:hover { background: #F5F5F5; }
+        .dropdown-item.danger { color: var(--danger); }
+        .dropdown-divider { height: 1px; background: var(--border); margin: 0.25rem 0; }
+
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 50;
+            transition: transform 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-section { padding: 1rem 0; }
+
+        .nav-label {
+            padding: 0 1.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover { background: #F5F5F5; color: var(--primary); }
+        .nav-item.active { background: #F5F5F5; color: var(--primary); border-left-color: var(--primary); }
+        .nav-item .icon { font-size: 1.1rem; width: 24px; text-align: center; }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .content-area {
+            margin-left: 260px;
             padding: 2rem;
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 2rem;
+            max-width: 1200px;
         }
 
         @media (max-width: 1024px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .content-area { margin-left: 0; }
         }
 
-        /* Cards */
         .card {
-            background: var(--card);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            overflow: hidden;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
             border: 1px solid var(--border);
+            overflow: hidden;
         }
 
         .card-header {
-            padding: 1rem 1.5rem;
+            padding: 1.25rem 1.5rem;
             border-bottom: 1px solid var(--border);
-            font-weight: 700;
-            font-size: 1.1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: #FAFAFA;
         }
 
-        .card-body {
-            padding: 1.5rem;
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        /* Video Section */
-        .video-wrapper {
+        .card-body { padding: 1.5rem; }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+
+        .video-container {
             position: relative;
             background: #000;
-            border-radius: 12px;
+            border-radius: var(--radius);
             overflow: hidden;
             aspect-ratio: 16/9;
         }
 
-        .video-wrapper iframe {
+        .video-container iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
 
-        .stream-controls {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
+        .stream-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 2rem 1.5rem 1.5rem;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
-        .input-group {
-            display: flex;
-            gap: 0.5rem;
-            flex: 1;
-            min-width: 200px;
+        .video-container:hover .stream-overlay { opacity: 1; }
+
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: var(--text);
         }
 
-        input[type="text"] {
-            flex: 1;
-            padding: 0.6rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
             font-size: 0.95rem;
             font-family: inherit;
+            transition: all 0.2s;
+            background: var(--surface);
         }
 
-        input[type="text"]:focus {
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.1);
         }
 
-        /* Buttons */
+        .form-textarea { resize: vertical; min-height: 100px; }
+
+        .input-group { display: flex; gap: 0.5rem; }
+        .input-group .form-input { flex: 1; }
+
         .btn {
-            padding: 0.6rem 1.2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.25rem;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
             font-family: inherit;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
+            white-space: nowrap;
         }
+
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
 
         .btn-primary {
             background: var(--primary);
             color: white;
         }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
-        }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
 
         .btn-success {
             background: var(--success);
             color: white;
-            font-size: 1.1rem;
-            padding: 0.8rem 1.5rem;
-            width: 100%;
-            justify-content: center;
         }
+        .btn-success:hover:not(:disabled) { background: #1B5E20; transform: translateY(-1px); }
 
-        .btn-success:hover {
-            background: #1B5E20;
-            transform: translateY(-1px);
+        .btn-danger {
+            background: var(--danger);
+            color: white;
         }
-
-        .btn-success:disabled {
-            background: #A5D6A7;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .btn-danger:hover:not(:disabled) { background: #B71C1C; }
 
         .btn-outline {
             background: transparent;
-            border: 1px solid var(--border);
+            border: 1.5px solid var(--border);
             color: var(--text);
         }
+        .btn-outline:hover:not(:disabled) { background: #F5F5F5; border-color: var(--text-secondary); }
 
-        .btn-outline:hover {
-            background: #F5F5F5;
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
         }
+        .btn-ghost:hover { background: #F5F5F5; color: var(--text); }
 
-        /* Current Lot */
-        .lot-hero {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
+        .btn-lg { padding: 1rem 2rem; font-size: 1.1rem; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
 
-        @media (max-width: 768px) {
-            .lot-hero {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .lot-image {
-            width: 100%;
-            height: 280px;
-            object-fit: cover;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #E6D5B8, #D4C4A8);
+        .auth-page {
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4rem;
+            background: linear-gradient(135deg, var(--bg) 0%, #E8E0D0 100%);
+            padding: 2rem;
         }
 
-        .lot-details h2 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
+        .auth-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+        }
+
+        .auth-header {
+            padding: 2rem 2rem 1rem;
+            text-align: center;
+        }
+
+        .auth-header .brand-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .auth-header h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+        .auth-header p { color: var(--text-secondary); font-size: 0.9rem; }
+
+        .auth-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+        }
+
+        .auth-tab.active { color: var(--primary); }
+        .auth-tab.active::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .auth-body { padding: 1.5rem 2rem 2rem; }
+
+        .social-login {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.7rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .social-btn:hover { background: #F5F5F5; border-color: var(--text-secondary); }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.25rem 0;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .divider::before, .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .lot-hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) { .lot-hero { grid-template-columns: 1fr; } }
+
+        .lot-gallery {
+            position: relative;
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: linear-gradient(135deg, #E6D5B8, #D4C4A8);
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+        }
+
+        .lot-gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-nav {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .gallery-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .gallery-dot.active { background: white; width: 24px; border-radius: 4px; }
+
+        .lot-title {
+            font-size: 2rem;
+            font-weight: 800;
             color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
         }
 
-        .lot-meta {
+        .lot-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+        }
+
+        .lot-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-            color: var(--text-light);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
         }
 
-        .meta-tag {
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.35rem 0.8rem;
             background: #EFEBE9;
-            padding: 0.3rem 0.8rem;
-            border-radius: 6px;
-            font-weight: 500;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
 
-        .price-display {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--success);
-            margin: 1rem 0;
-            font-variant-numeric: tabular-nums;
+        .tag.primary { background: var(--primary); color: white; }
+        .tag.success { background: var(--success-light); color: var(--success); }
+
+        .price-block {
+            background: linear-gradient(135deg, var(--success-light), #C8E6C9);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
         }
 
         .price-label {
-            font-size: 0.9rem;
-            color: var(--text-light);
-            font-weight: 500;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--success);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
         }
 
-        .countdown {
+        .price-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--success);
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+
+        .price-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .countdown-box {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             background: #FFF3E0;
             color: var(--accent);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            border-radius: var(--radius-sm);
             font-weight: 700;
             font-size: 1.1rem;
-            margin-top: 0.5rem;
         }
 
-        /* Bid Section */
+        .countdown-box.urgent {
+            background: var(--danger-light);
+            color: var(--danger);
+            animation: pulse 1s infinite;
+        }
+
         .bid-section {
             margin-top: 1.5rem;
             padding-top: 1.5rem;
@@ -333,17 +617,18 @@
         .quick-bids {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 0.5rem;
+            gap: 0.6rem;
             margin-bottom: 1rem;
         }
 
         .quick-bid-btn {
-            padding: 0.6rem;
-            border: 1px solid var(--border);
-            background: white;
-            border-radius: 8px;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1rem;
             transition: all 0.2s;
             font-variant-numeric: tabular-nums;
         }
@@ -352,565 +637,2006 @@
             background: var(--primary);
             color: white;
             border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
         }
 
-        .bid-input-group {
+        .bid-input-row {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.6rem;
             margin-bottom: 1rem;
         }
 
-        .bid-input-group input {
+        .bid-input-row input {
             flex: 1;
-            padding: 0.8rem;
+            padding: 0.9rem;
             border: 2px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             font-size: 1.1rem;
-            font-weight: 600;
+            font-weight: 700;
             text-align: center;
+            font-variant-numeric: tabular-nums;
         }
 
-        /* Sidebar */
-        .sidebar {
+        .buy-now-bar {
             display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+            border-radius: var(--radius-sm);
+            border: 1px solid #FFE082;
         }
 
-        .bid-history {
-            max-height: 300px;
+        .buy-now-info { flex: 1; }
+        .buy-now-label { font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; }
+        .buy-now-price { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.875rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            background: #FAFAFA;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #F0F0F0;
+            vertical-align: middle;
+        }
+
+        tr:hover td { background: #FAFAFA; }
+        tr:last-child td { border-bottom: none; }
+
+        .table-actions { display: flex; gap: 0.4rem; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .badge-live { background: var(--danger-light); color: var(--danger); }
+        .badge-upcoming { background: #E3F2FD; color: #1565C0; }
+        .badge-sold { background: var(--success-light); color: var(--success); }
+        .badge-pending { background: #FFF3E0; color: var(--accent); }
+
+        .bid-feed {
+            max-height: 320px;
             overflow-y: auto;
         }
 
-        .bid-item {
+        .bid-entry {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem;
+            padding: 0.875rem 1rem;
             border-bottom: 1px solid #F5F5F5;
             animation: slideIn 0.3s ease;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
+        .bid-entry:last-child { border-bottom: none; }
+        .bid-entry.winner { background: var(--success-light); }
 
-        .bid-item:last-child {
-            border-bottom: none;
-        }
-
-        .bidder-name {
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .bid-amount {
-            font-weight: 700;
-            color: var(--primary);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .bid-time {
-            font-size: 0.75rem;
-            color: #999;
-        }
-
-        /* Upcoming Lots */
-        .lot-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .lot-item {
-            display: flex;
-            gap: 1rem;
-            padding: 0.75rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .lot-item:hover {
-            background: #FAFAFA;
-            border-color: var(--accent);
-            transform: translateX(4px);
-        }
-
-        .lot-thumb {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #E6D5B8, #D4C4A8);
-            border-radius: 8px;
+        .bidder-info { display: flex; align-items: center; gap: 0.75rem; }
+        .bidder-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .lot-info h4 {
-            font-size: 0.95rem;
-            margin-bottom: 0.2rem;
-        }
-
-        .lot-info p {
             font-size: 0.8rem;
-            color: var(--text-light);
+            font-weight: 700;
         }
 
-        .lot-status {
-            margin-left: auto;
-            font-size: 0.75rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            background: #E8F5E9;
-            color: var(--success);
+        .bidder-name { font-weight: 600; font-size: 0.9rem; }
+        .bid-time { font-size: 0.75rem; color: #999; }
+        .bid-amount { font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; font-size: 1rem; }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
             font-weight: 600;
-            height: fit-content;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
         }
 
-        .lot-status.upcoming {
-            background: #E3F2FD;
-            color: #1565C0;
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
         }
 
-        /* Toast Notification */
-        .toast {
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            font-weight: 600;
+        }
+
+        .stat-change.up { color: var(--success); }
+        .stat-change.down { color: var(--danger); }
+
+        .control-panel {
+            background: #1a1a2e;
+            color: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .control-panel h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-group input, .control-group select {
+            width: 100%;
+            padding: 0.6rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: var(--radius-sm);
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .control-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .control-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.active .modal { transform: scale(1); }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 { font-size: 1.25rem; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0.25rem;
+            line-height: 1;
+        }
+
+        .modal-body { padding: 1.5rem; }
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .stripe-element {
+            padding: 0.875rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+        }
+
+        .payment-summary {
+            background: #FAFAFA;
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .payment-line.total {
+            border-top: 2px solid var(--border);
+            margin-top: 0.5rem;
+            padding-top: 0.75rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .toast-container {
             position: fixed;
             bottom: 2rem;
             right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .toast {
             background: var(--text);
             color: white;
             padding: 1rem 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
             font-weight: 500;
+            animation: slideIn 0.3s ease;
+            pointer-events: auto;
+            max-width: 400px;
         }
 
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); color: var(--text); }
 
-        .toast.success {
-            background: var(--success);
-        }
-
-        .toast.error {
-            background: var(--danger);
-        }
-
-        /* Footer */
-        footer {
+        .empty-state {
             text-align: center;
-            padding: 2rem;
-            color: var(--text-light);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--border);
-            margin-top: 2rem;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty-state h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text); }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
+        .text-center { text-align: center; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 1.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: 0.75rem; }
+        .w-full { width: 100%; }
+        .text-sm { font-size: 0.875rem; }
+        .text-xs { font-size: 0.75rem; }
+        .text-secondary { color: var(--text-secondary); }
+        .font-mono { font-family: 'SF Mono', Monaco, monospace; }
 
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a1a1a1;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="header-content">
-        <div class="logo">LiveStock Auctions <span class="live-badge">Live Now</span></div>
-        <div class="user-info">
-            <div class="balance">💰 Balance: $<span id="userBalance">50000</span></div>
-            <div>👤 Guest Bidder</div>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Auth View -->
+<div id="authView" class="auth-page">
+    <div class="auth-card fade-in">
+        <div class="auth-header">
+            <div class="brand-icon">🐄</div>
+            <h1>LiveStock Auctions</h1>
+            <p>Professional cattle trading platform</p>
+        </div>
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+            <button class="auth-tab" onclick="switchAuthTab('register')">Create Account</button>
+        </div>
+        <div class="auth-body">
+            <div class="social-login">
+                <button class="social-btn" onclick="socialLogin('google')">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Google
+                </button>
+                <button class="social-btn" onclick="socialLogin('apple')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.22 7.13-.57 1.5-1.31 2.99-2.27 4.08zm-5.85-15.1c.07-2.04 1.76-3.79 3.78-3.94.29 2.32-1.93 4.48-3.78 3.94z"/></svg>
+                    Apple
+                </button>
+            </div>
+            <div class="divider">or continue with email</div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="you@ranch.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                    <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">
+                        <input type="checkbox" id="rememberMe"> Remember me
+                    </label>
+                    <a href="#" style="font-size:0.85rem; color:var(--primary); text-decoration:none;">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary w-full" id="loginBtn">
+                    Sign In to Auction
+                </button>
+            </form>
+
+            <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+                <div class="grid-2" style="gap:0.75rem;">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input type="text" class="form-input" id="regFirstName" placeholder="John" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" class="form-input" id="regLastName" placeholder="Doe" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="regEmail" placeholder="you@ranch.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="regPassword" placeholder="Min 8 characters" minlength="8" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Account Type</label>
+                    <select class="form-select" id="regRole">
+                        <option value="bidder">Buyer / Bidder</option>
+                        <option value="seller">Seller / Rancher</option>
+                        <option value="auctioneer">Auctioneer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone (for SMS alerts)</label>
+                    <input type="tel" class="form-input" id="regPhone" placeholder="+1 (555) 000-0000">
+                </div>
+                <label style="display:flex; align-items:flex-start; gap:0.5rem; font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem; cursor:pointer;">
+                    <input type="checkbox" required style="margin-top:0.2rem;">
+                    I agree to the Terms of Service and Privacy Policy
+                </label>
+                <button type="submit" class="btn btn-primary w-full" id="registerBtn">
+                    Create Account
+                </button>
+            </form>
         </div>
     </div>
-</header>
-
-<div class="container">
-    <main>
-        <!-- Twitch Stream -->
-        <div class="card" style="margin-bottom: 2rem;">
-            <div class="card-header">
-                <span>📡 Live Auction Stream</span>
-                <span style="font-size: 0.85rem; color: var(--text-light);">Powered by Twitch</span>
-            </div>
-            <div class="card-body">
-                <div class="video-wrapper" id="videoWrapper">
-                    <iframe 
-                        id="twitchPlayer"
-                        src="https://player.twitch.tv/?channel=livestockauction&parent=localhost&muted=true" 
-                        allowfullscreen>
-                    </iframe>
-                </div>
-                <div class="stream-controls">
-                    <div class="input-group">
-                        <input type="text" id="channelInput" placeholder="Enter Twitch channel name..." value="livestockauction">
-                        <button class="btn btn-primary" onclick="loadStream()">Load Stream</button>
-                    </div>
-                    <button class="btn btn-outline" onclick="toggleChat()">💬 Toggle Chat</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Current Lot -->
-        <div class="card">
-            <div class="card-header">
-                <span>🔥 Current Lot: #A-1042</span>
-                <span class="countdown" id="countdown">⏱ 02:45</span>
-            </div>
-            <div class="card-body">
-                <div class="lot-hero">
-                    <div class="lot-image">🐂</div>
-                    <div class="lot-details">
-                        <h2>Black Angus Bull — "Thunder"</h2>
-                        <div class="lot-meta">
-                            <span class="meta-tag">🎂 18 months</span>
-                            <span class="meta-tag">⚖️ 1,240 lbs</span>
-                            <span class="meta-tag">🏷️ Registered</span>
-                            <span class="meta-tag">💉 Vaccinated</span>
-                        </div>
-                        <div class="price-label">Current Bid</div>
-                        <div class="price-display" id="currentPrice">$4,250</div>
-                        <div style="font-size: 0.9rem; color: var(--text-light);">
-                            Starting bid: $3,500 &nbsp;|&nbsp; Reserve: $8,000
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bid-section">
-                    <div class="quick-bids">
-                        <button class="quick-bid-btn" onclick="placeQuickBid(50)">+$50</button>
-                        <button class="quick-bid-btn" onclick="placeQuickBid(100)">+$100</button>
-                        <button class="quick-bid-btn" onclick="placeQuickBid(250)">+$250</button>
-                    </div>
-                    <div class="bid-input-group">
-                        <input type="number" id="customBid" placeholder="Enter bid amount..." min="4300">
-                        <button class="btn btn-primary" onclick="placeCustomBid()">Place Bid</button>
-                    </div>
-                    <button class="btn btn-success" id="buyNowBtn" onclick="buyNow()">
-                        🏆 Buy Now — $8,000
-                    </button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <aside class="sidebar">
-        <!-- Bid History -->
-        <div class="card">
-            <div class="card-header">
-                <span>📋 Live Bid History</span>
-                <span style="font-size: 0.8rem; color: var(--text-light);" id="bidCount">12 bids</span>
-            </div>
-            <div class="card-body bid-history" id="bidHistory">
-                <div class="bid-item">
-                    <div>
-                        <div class="bidder-name">Rancher_Joe</div>
-                        <div class="bid-time">Just now</div>
-                    </div>
-                    <div class="bid-amount">$4,250</div>
-                </div>
-                <div class="bid-item">
-                    <div>
-                        <div class="bidder-name">CattleKing_99</div>
-                        <div class="bid-time">12s ago</div>
-                    </div>
-                    <div class="bid-amount">$4,100</div>
-                </div>
-                <div class="bid-item">
-                    <div>
-                        <div class="bidder-name">TexasLonghorns</div>
-                        <div class="bid-time">28s ago</div>
-                    </div>
-                    <div class="bid-amount">$3,950</div>
-                </div>
-                <div class="bid-item">
-                    <div>
-                        <div class="bidder-name">Rancher_Joe</div>
-                        <div class="bid-time">45s ago</div>
-                    </div>
-                    <div class="bid-amount">$3,800</div>
-                </div>
-                <div class="bid-item">
-                    <div>
-                        <div class="bidder-name">BovineBuyer</div>
-                        <div class="bid-time">1m ago</div>
-                    </div>
-                    <div class="bid-amount">$3,650</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Upcoming Lots -->
-        <div class="card">
-            <div class="card-header">
-                <span>📦 Upcoming Lots</span>
-            </div>
-            <div class="card-body lot-list">
-                <div class="lot-item">
-                    <div class="lot-thumb">🐄</div>
-                    <div class="lot-info">
-                        <h4>Hereford Heifer — "Daisy"</h4>
-                        <p>14 mo • 980 lbs • Lot #A-1043</p>
-                    </div>
-                    <span class="lot-status upcoming">Next</span>
-                </div>
-                <div class="lot-item">
-                    <div class="lot-thumb">🐂</div>
-                    <div class="lot-info">
-                        <h4>Charolais Bull — "Blizzard"</h4>
-                        <p>20 mo • 1,350 lbs • Lot #A-1044</p>
-                    </div>
-                    <span class="lot-status upcoming">Queue</span>
-                </div>
-                <div class="lot-item">
-                    <div class="lot-thumb">🐃</div>
-                    <div class="lot-info">
-                        <h4>Brahman Cow — "Sahara"</h4>
-                        <p>3 yr • 1,100 lbs • Lot #A-1045</p>
-                    </div>
-                    <span class="lot-status upcoming">Queue</span>
-                </div>
-                <div class="lot-item">
-                    <div class="lot-thumb">🐄</div>
-                    <div class="lot-info">
-                        <h4>Simmental Pair</h4>
-                        <p>Mixed • 2,100 lbs total • Lot #A-1046</p>
-                    </div>
-                    <span class="lot-status upcoming">Queue</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Auction Info -->
-        <div class="card">
-            <div class="card-header">
-                <span>ℹ️ Auction Details</span>
-            </div>
-            <div class="card-body" style="font-size: 0.9rem; color: var(--text-light);">
-                <p style="margin-bottom: 0.75rem;"><strong>Location:</strong> Amarillo Livestock Exchange, TX</p>
-                <p style="margin-bottom: 0.75rem;"><strong>Auctioneer:</strong> Jim "Fast Gavel" Morrison</p>
-                <p style="margin-bottom: 0.75rem;"><strong>Buyer's Premium:</strong> 8% on final bid</p>
-                <p><strong>Payment:</strong> Wire transfer within 24hrs</p>
-            </div>
-        </div>
-    </aside>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- Main App View -->
+<div id="appView" class="app hidden">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="brand" style="color:var(--primary); font-size:1.3rem;">
+                <span class="brand-icon">🐄</span>
+                LiveStock
+            </div>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-label">Auction</div>
+            <div class="nav-item active" onclick="navigateTo('live')" data-page="live">
+                <span class="icon">📡</span> Live Auction
+            </div>
+            <div class="nav-item" onclick="navigateTo('upcoming')" data-page="upcoming">
+                <span class="icon">📅</span> Upcoming Lots
+            </div>
+            <div class="nav-item" onclick="navigateTo('results')" data-page="results">
+                <span class="icon">🏆</span> Results
+            </div>
+        </div>
 
-<footer>
-    <p>© 2026 LiveStock Auctions MVP — Built for demonstration purposes.</p>
-    <p style="margin-top: 0.5rem; opacity: 0.7;">Embed any Twitch channel by typing the channel name above.</p>
-</footer>
+        <div class="nav-section">
+            <div class="nav-label">My Account</div>
+            <div class="nav-item" onclick="navigateTo('dashboard')" data-page="dashboard">
+                <span class="icon">📊</span> Dashboard
+            </div>
+            <div class="nav-item" onclick="navigateTo('bids')" data-page="bids">
+                <span class="icon">📝</span> My Bids
+            </div>
+            <div class="nav-item" onclick="navigateTo('payments')" data-page="payments">
+                <span class="icon">💳</span> Payments
+            </div>
+            <div class="nav-item" onclick="navigateTo('settings')" data-page="settings">
+                <span class="icon">⚙️</span> Settings
+            </div>
+        </div>
+
+        <div class="nav-section" id="auctioneerNav" style="display:none;">
+            <div class="nav-label">Auctioneer</div>
+            <div class="nav-item" onclick="navigateTo('admin')" data-page="admin">
+                <span class="icon">🎛️</span> Control Panel
+            </div>
+            <div class="nav-item" onclick="navigateTo('lots')" data-page="lots">
+                <span class="icon">📝</span> Manage Lots
+            </div>
+            <div class="nav-item" onclick="navigateTo('analytics')" data-page="analytics">
+                <span class="icon">📈</span> Analytics
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div style="font-weight:600; margin-bottom:0.25rem;" id="sidebarUserName">Guest</div>
+            <div style="opacity:0.7;" id="sidebarUserRole">Bidder</div>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <button class="btn btn-ghost" style="color:white; display:none;" id="menuToggle" onclick="toggleSidebar()">☰</button>
+                <div class="brand" style="font-size:1.2rem;">
+                    <span class="brand-icon">🐄</span>
+                    LiveStock Auctions
+                    <span class="live-indicator" id="liveBadge">Live</span>
+                </div>
+            </div>
+            <div class="top-actions">
+                <div class="balance-chip">
+                    💰 <span id="headerBalance">$50,000.00</span>
+                </div>
+                <div class="user-menu">
+                    <button class="user-btn" onclick="toggleUserMenu()">
+                        <span id="headerAvatar">👤</span>
+                        <span id="headerUserName">Guest</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="dropdown" id="userDropdown">
+                        <div class="dropdown-item" onclick="navigateTo('dashboard')">📊 Dashboard</div>
+                        <div class="dropdown-item" onclick="navigateTo('settings')">⚙️ Settings</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" onclick="navigateTo('payments')">💳 Add Funds</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item danger" onclick="logout()">🚪 Sign Out</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area" id="contentArea"></div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="paymentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>💳 Complete Payment</h2>
+            <button class="modal-close" onclick="closePaymentModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="payment-summary">
+                <div class="payment-line">
+                    <span>Winning Bid</span>
+                    <span class="font-mono" id="payBidAmount">$0.00</span>
+                </div>
+                <div class="payment-line">
+                    <span>Buyer's Premium (8%)</span>
+                    <span class="font-mono" id="payPremium">$0.00</span>
+                </div>
+                <div class="payment-line">
+                    <span>Transportation</span>
+                    <span class="font-mono">$350.00</span>
+                </div>
+                <div class="payment-line total">
+                    <span>Total Due</span>
+                    <span class="font-mono" id="payTotal">$0.00</span>
+                </div>
+            </div>
+            
+            <form id="paymentForm" onsubmit="processPayment(event)">
+                <div class="form-group">
+                    <label class="form-label">Cardholder Name</label>
+                    <input type="text" class="form-input" id="cardName" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Card Number</label>
+                    <div class="stripe-element" id="cardNumber">•••• •••• •••• ••••</div>
+                </div>
+                <div class="grid-2" style="gap:0.75rem;">
+                    <div class="form-group">
+                        <label class="form-label">Expiry</label>
+                        <div class="stripe-element" id="cardExpiry">MM / YY</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CVC</label>
+                        <div class="stripe-element" id="cardCvc">•••</div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-top:1rem; font-size:0.85rem; color:var(--text-secondary);">
+                    <span>🔒</span> Secured by Stripe. We never store your card details.
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
+            <button class="btn btn-success" onclick="processPayment(event)" id="paySubmitBtn">
+                Pay Now
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
-    // State
-    let currentPrice = 4250;
-    let userBalance = 50000;
-    let timeRemaining = 165; // seconds
-    let bidHistory = [
-        { name: 'Rancher_Joe', amount: 4250, time: 'Just now' },
-        { name: 'CattleKing_99', amount: 4100, time: '12s ago' },
-        { name: 'TexasLonghorns', amount: 3950, time: '28s ago' },
-        { name: 'Rancher_Joe', amount: 3800, time: '45s ago' },
-        { name: 'BovineBuyer', amount: 3650, time: '1m ago' }
-    ];
+// ==================== STATE ====================
+const AppState = {
+    currentUser: null,
+    currentPage: 'live',
+    balance: 50000,
+    currentLot: {
+        id: 'A-1042',
+        name: 'Black Angus Bull — "Thunder"',
+        description: 'Premium registered Black Angus bull. Excellent genetics, docile temperament. Ready for breeding season.',
+        currentBid: 4250,
+        startingBid: 3500,
+        reservePrice: 8000,
+        buyNowPrice: 8000,
+        timeRemaining: 165,
+        status: 'live',
+        images: ['🐂'],
+        tags: [
+            { label: '18 months', icon: '🎂' },
+            { label: '1,240 lbs', icon: '⚖️' },
+            { label: 'Registered', icon: '🏷️' },
+            { label: 'Vaccinated', icon: '💉' }
+        ],
+        seller: 'Triple-R Ranch',
+        location: 'Amarillo, TX'
+    },
+    lots: [
+        { id: 'A-1042', name: 'Black Angus Bull — "Thunder"', price: 4250, status: 'live', image: '🐂', tags: '18mo • 1,240lbs' },
+        { id: 'A-1043', name: 'Hereford Heifer — "Daisy"', price: 3200, status: 'upcoming', image: '🐄', tags: '14mo • 980lbs' },
+        { id: 'A-1044', name: 'Charolais Bull — "Blizzard"', price: 5100, status: 'upcoming', image: '🐂', tags: '20mo • 1,350lbs' },
+        { id: 'A-1045', name: 'Brahman Cow — "Sahara"', price: 2800, status: 'upcoming', image: '🐃', tags: '3yr • 1,100lbs' },
+        { id: 'A-1046', name: 'Simmental Pair', price: 6200, status: 'upcoming', image: '🐄', tags: 'Mixed • 2,100lbs' },
+        { id: 'A-1047', name: 'Texas Longhorn Steer', price: 1800, status: 'sold', image: '🐃', tags: '2yr • 1,450lbs', finalPrice: 2400 },
+        { id: 'A-1048', name: 'Red Angus Heifer', price: 2900, status: 'sold', image: '🐄', tags: '16mo • 1,050lbs', finalPrice: 3400 }
+    ],
+    bidHistory: [
+        { id: 1, name: 'Rancher_Joe', amount: 4250, time: 'Just now', avatar: 'RJ', isYou: false },
+        { id: 2, name: 'CattleKing_99', amount: 4100, time: '12s ago', avatar: 'CK', isYou: false },
+        { id: 3, name: 'TexasLonghorns', amount: 3950, time: '28s ago', avatar: 'TL', isYou: false },
+        { id: 4, name: 'Rancher_Joe', amount: 3800, time: '45s ago', avatar: 'RJ', isYou: false },
+        { id: 5, name: 'BovineBuyer', amount: 3650, time: '1m ago', avatar: 'BB', isYou: false }
+    ],
+    myBids: [],
+    payments: [],
+    users: [],
+    streamChannel: 'livestockauction',
+    isAdmin: false,
+    timerInterval: null,
+    simInterval: null
+};
 
-    // Format currency
-    const formatMoney = (amount) => '$' + amount.toLocaleString();
+// ==================== UTILS ====================
+const formatMoney = (amount) => '$' + amount.toLocaleString('en-US');
+const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+};
 
-    // Load Twitch Stream
-    function loadStream() {
-        const channel = document.getElementById('channelInput').value.trim() || 'livestockauction';
-        const iframe = document.getElementById('twitchPlayer');
-        const parent = window.location.hostname || 'localhost';
-        
-        iframe.src = `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${parent}&muted=true`;
-        showToast(`Loading stream: ${channel}`, 'success');
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ==================== AUTH ====================
+function switchAuthTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (tab === 'login') {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+    } else {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
     }
+}
 
-    // Toggle Chat (opens Twitch popout chat)
-    function toggleChat() {
-        const channel = document.getElementById('channelInput').value.trim() || 'livestockauction';
-        window.open(`https://www.twitch.tv/popout/${channel}/chat`, 'TwitchChat', 'width=400,height=600');
-    }
-
-    // Place Quick Bid
-    function placeQuickBid(increment) {
-        const newBid = currentPrice + increment;
-        if (newBid > userBalance) {
-            showToast('Insufficient balance!', 'error');
-            return;
-        }
-        processBid(newBid);
-    }
-
-    // Place Custom Bid
-    function placeCustomBid() {
-        const input = document.getElementById('customBid');
-        const amount = parseInt(input.value);
-        
-        if (!amount || amount <= currentPrice) {
-            showToast(`Bid must be higher than ${formatMoney(currentPrice)}`, 'error');
-            return;
-        }
-        if (amount > userBalance) {
-            showToast('Insufficient balance!', 'error');
-            return;
-        }
-        processBid(amount);
-        input.value = '';
-    }
-
-    // Buy Now
-    function buyNow() {
-        const buyNowPrice = 8000;
-        if (buyNowPrice > userBalance) {
-            showToast('Insufficient balance!', 'error');
-            return;
-        }
-        processBid(buyNowPrice, true);
-    }
-
-    // Process Bid
-    function processBid(amount, isBuyNow = false) {
-        currentPrice = amount;
-        userBalance -= amount;
-        
-        // Update UI
-        document.getElementById('currentPrice').textContent = formatMoney(currentPrice);
-        document.getElementById('userBalance').textContent = userBalance.toLocaleString();
-        
-        // Add to history
-        const newBid = {
-            name: 'You (Guest)',
-            amount: amount,
-            time: 'Just now'
+function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const btn = document.getElementById('loginBtn');
+    
+    btn.innerHTML = '<div class="spinner"></div> Signing in...';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+        const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const user = {
+            id: 'user_' + Date.now(),
+            email,
+            name,
+            role: 'bidder',
+            avatar: name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
+            createdAt: new Date().toISOString()
         };
-        bidHistory.unshift(newBid);
-        renderBidHistory();
         
-        // Reset timer slightly to simulate activity
-        timeRemaining = Math.min(timeRemaining + 15, 180);
+        AppState.currentUser = user;
+        AppState.isAdmin = false;
+        completeLogin(user);
+        btn.innerHTML = 'Sign In to Auction';
+        btn.disabled = false;
+    }, 1200);
+}
+
+function handleRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('registerBtn');
+    const role = document.getElementById('regRole').value;
+    
+    btn.innerHTML = '<div class="spinner"></div> Creating account...';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+        const firstName = document.getElementById('regFirstName').value;
+        const lastName = document.getElementById('regLastName').value;
+        const user = {
+            id: 'user_' + Date.now(),
+            email: document.getElementById('regEmail').value,
+            name: `${firstName} ${lastName}`,
+            role: role,
+            phone: document.getElementById('regPhone').value,
+            avatar: (firstName[0] + lastName[0]).toUpperCase(),
+            createdAt: new Date().toISOString()
+        };
         
-        const message = isBuyNow ? '🎉 Congratulations! You won this lot!' : `Bid placed: ${formatMoney(amount)}`;
-        showToast(message, 'success');
-        
-        // Disable buy now if reserve met (demo logic)
-        if (amount >= 8000) {
-            document.getElementById('buyNowBtn').disabled = true;
-            document.getElementById('buyNowBtn').textContent = '✅ Sold!';
-        }
+        AppState.currentUser = user;
+        AppState.isAdmin = role === 'auctioneer';
+        completeLogin(user);
+        btn.innerHTML = 'Create Account';
+        btn.disabled = false;
+    }, 1500);
+}
+
+function socialLogin(provider) {
+    showToast(`Redirecting to ${provider}...`, 'success');
+    setTimeout(() => {
+        const user = {
+            id: 'user_' + Date.now(),
+            email: `user@${provider}.com`,
+            name: provider === 'google' ? 'John Doe' : 'Jane Smith',
+            role: 'bidder',
+            avatar: provider === 'google' ? 'JD' : 'JS',
+            createdAt: new Date().toISOString()
+        };
+        AppState.currentUser = user;
+        AppState.isAdmin = false;
+        completeLogin(user);
+    }, 1000);
+}
+
+function completeLogin(user) {
+    document.getElementById('authView').classList.add('hidden');
+    document.getElementById('appView').classList.remove('hidden');
+    
+    document.getElementById('headerUserName').textContent = user.name;
+    document.getElementById('headerAvatar').textContent = user.avatar;
+    document.getElementById('sidebarUserName').textContent = user.name;
+    document.getElementById('sidebarUserRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+    document.getElementById('headerBalance').textContent = '$' + AppState.balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+    
+    if (AppState.isAdmin) {
+        document.getElementById('auctioneerNav').style.display = 'block';
     }
+    
+    showToast(`Welcome back, ${user.name}!`, 'success');
+    renderPage('live');
+}
 
-    // Render Bid History
-    function renderBidHistory() {
-        const container = document.getElementById('bidHistory');
-        document.getElementById('bidCount').textContent = `${bidHistory.length} bids`;
-        
-        container.innerHTML = bidHistory.map(bid => `
-            <div class="bid-item">
-                <div>
-                    <div class="bidder-name">${bid.name}</div>
-                    <div class="bid-time">${bid.time}</div>
-                </div>
-                <div class="bid-amount">${formatMoney(bid.amount)}</div>
-            </div>
-        `).join('');
+function logout() {
+    // Clear intervals
+    if (AppState.timerInterval) clearInterval(AppState.timerInterval);
+    if (AppState.simInterval) clearInterval(AppState.simInterval);
+    
+    AppState.currentUser = null;
+    AppState.isAdmin = false;
+    document.getElementById('appView').classList.add('hidden');
+    document.getElementById('authView').classList.remove('hidden');
+    document.getElementById('auctioneerNav').style.display = 'none';
+    document.getElementById('userDropdown').classList.remove('active');
+    showToast('Signed out successfully', 'success');
+}
+
+function toggleUserMenu() {
+    document.getElementById('userDropdown').classList.toggle('active');
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.user-menu')) {
+        document.getElementById('userDropdown')?.classList.remove('active');
     }
+});
 
-    // Countdown Timer
-    function updateTimer() {
-        if (timeRemaining > 0) {
-            timeRemaining--;
-            const mins = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
-            const secs = (timeRemaining % 60).toString().padStart(2, '0');
-            document.getElementById('countdown').textContent = `⏱ ${mins}:${secs}`;
-            
-            if (timeRemaining <= 30) {
-                document.getElementById('countdown').style.background = '#FFEBEE';
-                document.getElementById('countdown').style.color = '#C62828';
-            }
-        } else {
-            document.getElementById('countdown').textContent = '⏱ CLOSED';
-            document.getElementById('countdown').style.background = '#FFEBEE';
-            document.getElementById('countdown').style.color = '#C62828';
-        }
-    }
-
-    // Toast Notification
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.className = `toast ${type} show`;
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
-    }
-
-    // Simulate other bidders (demo atmosphere)
-    function simulateBidding() {
-        if (timeRemaining <= 0 || Math.random() > 0.3) return;
-        
-        const names = ['Rancher_Joe', 'CattleKing_99', 'TexasLonghorns', 'BovineBuyer', 'Stockyard_Sam', 'Angus_Al'];
-        const name = names[Math.floor(Math.random() * names.length)];
-        const increment = [50, 100, 150][Math.floor(Math.random() * 3)];
-        const amount = currentPrice + increment;
-        
-        currentPrice = amount;
-        document.getElementById('currentPrice').textContent = formatMoney(currentPrice);
-        
-        bidHistory.unshift({ name, amount, time: 'Just now' });
-        if (bidHistory.length > 20) bidHistory.pop();
-        renderBidHistory();
-        
-        // Reset timer on activity
-        timeRemaining = Math.min(timeRemaining + 10, 180);
-    }
-
-    // Init
-    setInterval(updateTimer, 1000);
-    setInterval(simulateBidding, 8000); // Simulate activity every 8s
-    renderBidHistory();
-
-    // Allow Enter key for custom bid
-    document.getElementById('customBid').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') placeCustomBid();
+// ==================== NAVIGATION ====================
+function navigateTo(page) {
+    AppState.currentPage = page;
+    document.getElementById('userDropdown')?.classList.remove('active');
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
     });
     
-    document.getElementById('channelInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') loadStream();
-    });
+    renderPage(page);
+}
+
+function renderPage(page) {
+    const container = document.getElementById('contentArea');
+    
+    switch(page) {
+        case 'live':
+            container.innerHTML = renderLiveAuction();
+            initLiveAuction();
+            break;
+        case 'upcoming':
+            container.innerHTML = renderUpcomingLots();
+            break;
+        case 'results':
+            container.innerHTML = renderResults();
+            break;
+        case 'dashboard':
+            container.innerHTML = renderDashboard();
+            break;
+        case 'bids':
+            container.innerHTML = renderMyBids();
+            break;
+        case 'payments':
+            container.innerHTML = renderPayments();
+            break;
+        case 'settings':
+            container.innerHTML = renderSettings();
+            break;
+        case 'admin':
+            container.innerHTML = renderAdminPanel();
+            break;
+        case 'lots':
+            container.innerHTML = renderLotManagement();
+            break;
+        case 'analytics':
+            container.innerHTML = renderAnalytics();
+            break;
+        default:
+            container.innerHTML = renderLiveAuction();
+            initLiveAuction();
+    }
+}
+
+// ==================== PAGE RENDERS ====================
+function renderLiveAuction() {
+    const lot = AppState.currentLot;
+    return `
+        <div class="fade-in">
+            <div style="margin-bottom:1.5rem;">
+                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Live Auction Floor</h1>
+                <p style="color:var(--text-secondary);">Amarillo Livestock Exchange • Session #2026-05-07-A</p>
+            </div>
+
+            <div class="grid-2" style="margin-bottom:2rem;">
+                <div class="card" style="grid-column:1 / -1;">
+                    <div class="card-header">
+                        <span class="card-title">📡 Live Stream</span>
+                        <div style="display:flex; gap:0.5rem;">
+                            <span class="badge badge-live">● LIVE</span>
+                            <span style="font-size:0.85rem; color:var(--text-secondary);">1,247 watching</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="video-container" id="videoContainer">
+                            <iframe 
+                                id="twitchPlayer"
+                                src="https://player.twitch.tv/?channel=${AppState.streamChannel}&parent=${window.location.hostname || 'localhost'}&muted=true" 
+                                allowfullscreen>
+                            </iframe>
+                            <div class="stream-overlay">
+                                <div style="font-size:0.85rem; opacity:0.8;">Current Lot: ${lot.id}</div>
+                                <div style="font-size:1.25rem; font-weight:700;">${lot.name}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:0.75rem; margin-top:1rem; flex-wrap:wrap;">
+                            <div class="input-group" style="flex:1; min-width:200px;">
+                                <input type="text" class="form-input" id="channelInput" value="${AppState.streamChannel}" placeholder="Twitch channel...">
+                                <button class="btn btn-primary" onclick="loadStream()">Load</button>
+                            </div>
+                            <button class="btn btn-outline" onclick="toggleChat()">💬 Popout Chat</button>
+                            <button class="btn btn-outline" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">🔥 Lot ${lot.id}</span>
+                        <span class="countdown-box ${lot.timeRemaining <= 30 ? 'urgent' : ''}" id="countdown">
+                            ⏱ ${formatTime(lot.timeRemaining)}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="lot-hero" style="grid-template-columns:1fr; gap:1rem; margin-bottom:0;">
+                            <div class="lot-gallery" style="height:200px;">${lot.images[0]}</div>
+                        </div>
+                        
+                        <h2 class="lot-title" style="font-size:1.5rem; margin-top:1rem;">${lot.name}</h2>
+                        <p class="lot-subtitle">${lot.description}</p>
+                        
+                        <div class="lot-tags">
+                            ${lot.tags.map(t => `<span class="tag">${t.icon} ${t.label}</span>`).join('')}
+                            <span class="tag primary">Seller: ${lot.seller}</span>
+                        </div>
+
+                        <div class="price-block">
+                            <div class="price-label">Current Bid</div>
+                            <div class="price-value" id="currentPrice">${formatMoney(lot.currentBid)}</div>
+                            <div class="price-meta">
+                                <span>Start: ${formatMoney(lot.startingBid)}</span>
+                                <span>Reserve: ${formatMoney(lot.reservePrice)}</span>
+                            </div>
+                        </div>
+
+                        <div class="bid-section">
+                            <div class="quick-bids">
+                                <button class="quick-bid-btn" onclick="placeQuickBid(50)">+${formatMoney(50)}</button>
+                                <button class="quick-bid-btn" onclick="placeQuickBid(100)">+${formatMoney(100)}</button>
+                                <button class="quick-bid-btn" onclick="placeQuickBid(250)">+${formatMoney(250)}</button>
+                            </div>
+                            <div class="bid-input-row">
+                                <input type="number" id="customBid" placeholder="Enter amount..." min="${lot.currentBid + 50}">
+                                <button class="btn btn-primary" onclick="placeCustomBid()">Place Bid</button>
+                            </div>
+                            <div class="buy-now-bar">
+                                <div class="buy-now-info">
+                                    <div class="buy-now-label">Buy It Now</div>
+                                    <div class="buy-now-price">${formatMoney(lot.buyNowPrice)}</div>
+                                </div>
+                                <button class="btn btn-success" id="buyNowBtn" onclick="buyNow()">Purchase</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">📋 Live Bids</span>
+                        <span style="font-size:0.85rem; color:var(--text-secondary);">${AppState.bidHistory.length} total</span>
+                    </div>
+                    <div class="card-body bid-feed" id="bidHistoryContainer">
+                        ${renderBidHistory()}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📦 On Deck</span>
+                    <button class="btn btn-sm btn-outline" onclick="navigateTo('upcoming')">View All</button>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.5rem;">
+                        ${AppState.lots.filter(l => l.status === 'upcoming').slice(0, 4).map(lot => `
+                            <div style="min-width:200px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; cursor:pointer;" onclick="previewLot('${lot.id}')">
+                                <div style="font-size:3rem; text-align:center; margin-bottom:0.5rem;">${lot.image}</div>
+                                <div style="font-weight:600; font-size:0.9rem; margin-bottom:0.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${lot.name}</div>
+                                <div style="font-size:0.8rem; color:var(--text-secondary);">${lot.tags}</div>
+                                <div style="font-size:0.9rem; font-weight:700; color:var(--primary); margin-top:0.5rem;">${formatMoney(lot.price)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderBidHistory() {
+    return AppState.bidHistory.map(bid => `
+        <div class="bid-entry ${bid.isYou ? 'winner' : ''}">
+            <div class="bidder-info">
+                <div class="bidder-avatar">${bid.avatar}</div>
+                <div>
+                    <div class="bidder-name">${bid.isYou ? 'You' : bid.name} ${bid.isYou ? '👤' : ''}</div>
+                    <div class="bid-time">${bid.time}</div>
+                </div>
+            </div>
+            <div class="bid-amount">${formatMoney(bid.amount)}</div>
+        </div>
+    `).join('');
+}
+
+function renderUpcomingLots() {
+    return `
+        <div class="fade-in">
+            <div style="margin-bottom:1.5rem;">
+                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Upcoming Lots</h1>
+                <p style="color:var(--text-secondary);">Preview and set reminders for future auctions</p>
+            </div>
+            
+            <div class="grid-3">
+                ${AppState.lots.filter(l => l.status === 'upcoming').map(lot => `
+                    <div class="card" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="height:180px; background:linear-gradient(135deg, #E6D5B8, #D4C4A8); display:flex; align-items:center; justify-content:center; font-size:4rem;">
+                            ${lot.image}
+                        </div>
+                        <div class="card-body">
+                            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:0.5rem;">
+                                <h3 style="font-size:1.1rem;">${lot.name}</h3>
+                                <span class="badge badge-upcoming">Upcoming</span>
+                            </div>
+                            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">${lot.tags}</p>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:1.25rem; font-weight:800; color:var(--primary);">${formatMoney(lot.price)}</span>
+                                <button class="btn btn-sm btn-outline" onclick="setReminder('${lot.id}')">🔔 Remind</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderResults() {
+    return `
+        <div class="fade-in">
+            <div style="margin-bottom:1.5rem;">
+                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Auction Results</h1>
+                <p style="color:var(--text-secondary);">Completed lots and final sale prices</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Lot #</th>
+                                    <th>Animal</th>
+                                    <th>Details</th>
+                                    <th>Final Price</th>
+                                    <th>Winner</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${AppState.lots.filter(l => l.status === 'sold').map(lot => `
+                                    <tr>
+                                        <td><span class="font-mono" style="font-weight:600;">${lot.id}</span></td>
+                                        <td>
+                                            <div style="display:flex; align-items:center; gap:0.75rem;">
+                                                <span style="font-size:1.5rem;">${lot.image}</span>
+                                                <span style="font-weight:600;">${lot.name}</span>
+                                            </div>
+                                        </td>
+                                        <td style="color:var(--text-secondary); font-size:0.9rem;">${lot.tags}</td>
+                                        <td style="font-weight:700; color:var(--success); font-size:1.1rem;">${formatMoney(lot.finalPrice)}</td>
+                                        <td>
+                                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                                <div class="bidder-avatar" style="width:24px; height:24px; font-size:0.7rem;">RJ</div>
+                                                <span style="font-size:0.9rem;">Rancher_Joe</span>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-sold">✓ Sold</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderDashboard() {
+    const totalBids = AppState.myBids.length;
+    const totalSpent = AppState.myBids.reduce((sum, b) => sum + b.amount, 0);
+    const wonLots = AppState.myBids.filter(b => b.won).length;
+    
+    return `
+        <div class="fade-in">
+            <div style="margin-bottom:1.5rem;">
+                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Dashboard</h1>
+                <p style="color:var(--text-secondary);">Overview of your auction activity</p>
+            </div>
+            
+            <div class="admin-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Active Bids</div>
+                    <div class="stat-value">${totalBids}</div>
+                    <div class="stat-change up">↑ 2 from last week</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Spent</div>
+                    <div class="stat-value">${formatMoney(totalSpent)}</div>
+                    <div class="stat-change">${totalSpent > 0 ? 'This session' : 'No activity yet'}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Lots Won</div>
+                    <div class="stat-value">${wonLots}</div>
+                    <div class="stat-change up">Win rate ${totalBids > 0 ? Math.round((wonLots/totalBids)*100) : 0}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Available Balance</div>
+                    <div class="stat-value">${formatMoney(AppState.balance)}</div>
+                    <div class="stat-change up">Ready to bid</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">📈 Recent Activity</span>
+                    </div>
+                    <div class="card-body">
+                        ${AppState.myBids.length === 0 ? `
+                            <div class="empty-state">
+                                <div class="icon">📭</div>
+                                <h3>No bids yet</h3>
+                                <p>Start bidding on live lots to see your activity here.</p>
+                            </div>
+                        ` : `
+                            <div class="bid-feed">
+                                ${AppState.myBids.slice(0, 5).map(bid => `
+                                    <div class="bid-entry">
+                                        <div class="bidder-info">
+                                            <div class="bidder-avatar" style="background:var(--success);">YOU</div>
+                                            <div>
+                                                <div class="bidder-name">${bid.lotName}</div>
+                                                <div class="bid-time">${bid.time}</div>
+                                            </div>
+                                        </div>
+                                        <div class="bid-amount">${formatMoney(bid.amount)}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">🏆 Won Lots</span>
+                    </div>
+                    <div class="card-body">
+                        ${wonLots === 0 ? `
+                            <div class="empty-state">
+                                <div class="icon">🏅</div>
+                                <h3>No wins yet</h3>
+                                <p>Winning bids will appear here for payment.</p>
+                            </div>
+                        ` : `
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr><th>Lot</th><th>Price</th><th>Action</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        ${AppState.myBids.filter(b => b.won).map(bid => `
+                                            <tr>
+                                                <td style="font-weight:600;">${bid.lotName}</td>
+                                                <td style="font-weight:700; color:var(--success);">${formatMoney(bid.amount)}</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-success" onclick="openPaymentModal(${bid.amount})">Pay</button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderMyBids() {
+    return `
+        <div class="fade-in">
+            <div style="margin-bottom:1.5rem;">
+                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">My Bids</h1>
+                <p style="color:var(--text-secondary);">History of all your auction activity</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    ${AppState.myBids.length === 0 ? `
+                        <div class="empty-state">
+                            <div class="icon">📝</div>
+                            <h3>No bids placed</h3>
+                            <p>You haven't placed any bids yet. Head to the Live Auction to get started.</p>
+                            <button class="btn btn-primary mt-2" onclick="navigateTo('live')">Go to Live Auction</button>
+                        </div>
+                    ` : `
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Lot</th>
+                                        <th>Amount</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${AppState.myBids.map(bid => `
+                                        <tr>
+                                            <td style="font-weight:600;">${bid.lotName}</td>
+                                            <td style="font-weight:700; color:var(--primary);">${formatMoney(bid.amount)}</td>
+                                            <td style="color:var(--text-secondary);">${bid.time}</td>
+                                            <td>
+                                                ${bid.won 
+                                                    ? '<span class="badge badge-sold">Won</span>' 
+                                                    : '<span class="badge badge-pending">Outbid</span>'}
+                                            </td>
+                                            <td>
+                                                ${bid.won && !bid.paid
+                                                    ? `<button class="btn btn-sm btn-success" onclick="openPaymentModal(${bid.amount})">Pay Now</button>`
+                                                    : bid.paid 
+                                                        ? '<span style="font-size:0.85rem; color:var(--success); font-weight:600;">✓ Paid</span>'
+                                                        : '<span style="font-size:0.85rem; color:var(--text-secondary);">—</span>'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderPayments() {
+    return `
+        <div class="fade-in">
+            <div style="margin-bottom:1.5rem;">
+                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Payments & Wallet</h1>
+                <p style="color:var(--text-secondary);">Manage funds and view transaction history</p>
+            </div>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">💳 Add Funds</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Amount to Add</label>
+                            <div class="input-group">
+                                <span class="btn btn-outline" style="cursor:default;">$</span>
+                                <input type="number" class="form-input" id="addFundsAmount" placeholder="0.00" min="10" step="10">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+                            <button class="btn btn-outline" onclick="setAddFunds(100)">$100</button>
+                            <button class="btn btn-outline" onclick="setAddFunds(500)">$500</button>
+                            <button class="btn btn-outline" onclick="setAddFunds(1000)">$1,000</button>
+                            <button class="btn btn-outline" onclick="setAddFunds(5000)">$5,000</button>
+                        </div>
+                        <button class="btn btn-primary w-full" onclick="addFunds()">
+                            Add Funds via Stripe
+                        </button>
+                        <p style="margin-top:0.75rem; font-size:0.8rem; color:var(--text-secondary); text-align:center;">
+                            Demo mode — funds added instantly without real charge
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">📜 Transaction History</span>
+                    </div>
+                    <div class="card-body">
+                        ${AppState.payments.length === 0 ? `
+                            <div class="empty-state" style="padding:2rem;">
+                                <div class="icon">📄</div>
+                                <h3>No transactions</h3>
+                                <p>Payments and deposits will appear here.</p>
+                            </div>
+                        ` : `
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr><th>Date</th><th>Type</th><th>Amount</th><th>Status</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        ${AppState.payments.map(p => `
+                                            <tr>
+                                                <td style="font-size:0.85rem;">${p.date}</td>
+                                                <td>
+                                                    <span class="badge ${p.type === 'deposit' ? 'badge-success' : 'badge-pending'}">
+                                                        ${p.type === 'deposit' ? 'Deposit' : 'Payment'}
+                                                    </span>
+                                                </td>
+                                                <td style="font-weight:700; ${p.type === 'deposit' ? 'color:var(--success)' : 'color:var(--danger)'};">
+                                                    ${p.type === 'deposit' ? '+' : '-'}${formatMoney(p.amount)}
+                                                </td>
+                                                <td><span style="font-size:0.85rem; color:var(--success);">✓ Complete</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderSettings() {
+    const user = AppState.currentUser || {};
+    return `
+        <div class="fade-in">
+            <div style="margin-bottom:1.5rem;">
+                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Settings</h1>
+                <p style="color:var(--text-secondary);">Manage your account preferences</p>
+            </div>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">👤 Profile</span>
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="saveSettings(event)">
+                            <div class="grid-2" style="gap:0.75rem;">
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-input" value="${user.name?.split(' ')[0] || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-input" value="${user.name?.split(' ')[1] || ''}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" value="${user.email || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-input" value="${user.phone || ''}">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">🔔 Notifications</span>
+                    </div>
+                    <div class="card-body">
+                        <div style="display:flex; flex-direction:column; gap:1rem;">
+                            <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer;">
+                                <input type="checkbox" checked style="width:18px; height:18px;">
+                                <div>
+                                    <div style="font-weight:600;">Outbid Alerts</div>
+                                    <div style="font-size:0.85rem; color:var(--text-secondary);">SMS when someone outbids you</div>
+                                </div>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer;">
+                                <input type="checkbox" checked style="width:18px; height:18px;">
+                                <div>
+                                    <div style="font-weight:600;">Auction Reminders</div>
+                                    <div style="font-size:0.85rem; color:var(--text-secondary);">15 min before lots you're watching</div>
+                                </div>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer;">
+                                <input type="checkbox" style="width:18px; height:18px;">
+                                <div>
+                                    <div style="font-weight:600;">Marketing Emails</div>
+                                    <div style="font-size:0.85rem; color:var(--text-secondary);">New auctions and featured lots</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderAdminPanel() {
+    const lot = AppState.currentLot;
+    return `
+        <div class="fade-in">
+            <div style="margin-bottom:1.5rem;">
+                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Auctioneer Control Panel</h1>
+                <p style="color:var(--text-secondary);">Manage the live auction session</p>
+            </div>
+
+            <div class="admin-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Current Lot</div>
+                    <div class="stat-value" style="font-size:1.5rem;">${lot.id}</div>
+                    <div class="stat-change up">${lot.name}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Current Bid</div>
+                    <div class="stat-value">${formatMoney(lot.currentBid)}</div>
+                    <div class="stat-change up">${AppState.bidHistory.length} bids total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Time Remaining</div>
+                    <div class="stat-value" id="adminTimer">${formatTime(lot.timeRemaining)}</div>
+                    <div class="stat-change">${lot.timeRemaining <= 30 ? 'URGENT - Extend or Close' : 'On track'}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Online Viewers</div>
+                    <div class="stat-value">1,247</div>
+                    <div class="stat-change up">↑ 12% this hour</div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <h3>🎛️ Session Controls</h3>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Stream Channel</label>
+                        <input type="text" id="adminChannel" value="${AppState.streamChannel}">
+                    </div>
+                    <div class="control-group">
+                        <label>Current Lot ID</label>
+                        <input type="text" id="adminLotId" value="${lot.id}">
+                    </div>
+                    <div class="control-group">
+                        <label>Reserve Price</label>
+                        <input type="number" id="adminReserve" value="${lot.reservePrice}">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Starting Bid</label>
+                        <input type="number" id="adminStart" value="${lot.startingBid}">
+                    </div>
+                    <div class="control-group">
+                        <label>Buy Now Price</label>
+                        <input type="number" id="adminBuyNow" value="${lot.buyNowPrice}">
+                    </div>
+                    <div class="control-group">
+                        <label>Timer (seconds)</label>
+                        <input type="number" id="adminTimerSet" value="${lot.timeRemaining}">
+                    </div>
+                </div>
+                <div class="control-actions">
+                    <button class="btn btn-success" onclick="adminUpdateLot()">💾 Update Lot</button>
+                    <button class="btn btn-outline" style="background:rgba(255,255,255,0.1); color:white; border-color:rgba(255,255,255,0.3);" onclick="adminExtendTimer(60)">⏱ +1 Minute</button>
+                    <button class="btn btn-outline" style="background:rgba(255,255,255,0.1); color:white; border-color:rgba(255,255,255,0.3);" onclick="adminExtendTimer(30)">⏱ +30 Seconds</button>
+                    <button class="btn btn-danger" onclick="adminCloseLot()">🔨 Close & Sell</button>
+                    <button class="btn btn-danger" onclick="adminPassLot()">⏭ Pass Lot</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📋 Live Bid Feed (Auctioneer View)</span>
+                    <span style="font-size:0.85rem; color:var(--text-secondary);">Real-time with bidder IDs</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Bidder</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${AppState.bidHistory.map(bid => `
+                                    <tr>
+                                        <td class="font-mono" style="font-size:0.85rem;">${bid.time}</td>
+                                        <td>
+                                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                                <div class="bidder-avatar" style="width:24px; height:24px; font-size:0.7rem;">${bid.avatar}</div>
+                                                <span style="font-weight:600;">${bid.name}</span>
+                                            </div>
+                                        </td>
+                                        <td style="font-weight:700; color:var(--primary);">${formatMoney(bid.amount)}</td>
+                                        <td><span class="badge badge-live">Live</span></td>
+                                        <td><button class="btn btn-sm btn-outline">Accept</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderLotManagement() {
+    return `
+        <div class="fade-in">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <div>
+                    <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Manage Lots</h1>
+                    <p style="color:var(--text-secondary);">Create and edit auction listings</p>
+                </div>
+                <button class="btn btn-primary" onclick="showAddLotForm()">+ Add New Lot</button>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Lot #</th>
+                                    <th>Name</th>
+                                    <th>Starting</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${AppState.lots.map(lot => `
+                                    <tr>
+                                        <td class="font-mono" style="font-weight:600;">${lot.id}</td>
+                                        <td>
+                                            <div style="display:flex; align-items:center; gap:0.75rem;">
+                                                <span style="font-size:1.5rem;">${lot.image}</span>
+                                                <span style="font-weight:600;">${lot.name}</span>
+                                            </div>
+                                        </td>
+                                        <td style="font-weight:600;">${formatMoney(lot.price)}</td>
+                                        <td>
+                                            ${lot.status === 'live' ? '<span class="badge badge-live">● Live</span>' :
+                                              lot.status === 'upcoming' ? '<span class="badge badge-upcoming">Upcoming</span>' :
+                                              '<span class="badge badge-sold">Sold</span>'}
+                                        </td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button class="btn btn-sm btn-outline">Edit</button>
+                                                ${lot.status === 'upcoming' ? '<button class="btn btn-sm btn-primary" onclick="goLive(\''+lot.id+'\')">Go Live</button>' : ''}
+                                                <button class="btn btn-sm btn-danger">Delete</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderAnalytics() {
+    return `
+        <div class="fade-in">
+            <div style="margin-bottom:1.5rem;">
+                <h1 style="font-size:1.75rem; margin-bottom:0.25rem;">Analytics</h1>
+                <p style="color:var(--text-secondary);">Session performance and revenue</p>
+            </div>
+            
+            <div class="admin-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value">${formatMoney(124500)}</div>
+                    <div class="stat-change up">↑ 18% vs last session</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Lots Sold</div>
+                    <div class="stat-value">42</div>
+                    <div class="stat-change up">↑ 5 this hour</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg. Sale Price</div>
+                    <div class="stat-value">${formatMoney(2964)}</div>
+                    <div class="stat-change down">↓ 3% vs avg</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Unique Bidders</div>
+                    <div class="stat-value">156</div>
+                    <div class="stat-change up">↑ 24 new today</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📊 Session Overview</span>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex; gap:2rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:200px;">
+                            <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">Sell-Through Rate</div>
+                            <div style="font-size:2rem; font-weight:800; color:var(--success);">87%</div>
+                            <div style="width:100%; height:8px; background:#E8F5E9; border-radius:4px; margin-top:0.5rem; overflow:hidden;">
+                                <div style="width:87%; height:100%; background:var(--success); border-radius:4px;"></div>
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:200px;">
+                            <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">Reserve Met</div>
+                            <div style="font-size:2rem; font-weight:800; color:var(--accent);">64%</div>
+                            <div style="width:100%; height:8px; background:#FFF3E0; border-radius:4px; margin-top:0.5rem; overflow:hidden;">
+                                <div style="width:64%; height:100%; background:var(--accent); border-radius:4px;"></div>
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:200px;">
+                            <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">Online Engagement</div>
+                            <div style="font-size:2rem; font-weight:800; color:var(--primary);">High</div>
+                            <div style="width:100%; height:8px; background:#EFEBE9; border-radius:4px; margin-top:0.5rem; overflow:hidden;">
+                                <div style="width:92%; height:100%; background:var(--primary); border-radius:4px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ==================== AUCTION LOGIC ====================
+function initLiveAuction() {
+    // Timer
+    if (AppState.timerInterval) clearInterval(AppState.timerInterval);
+    AppState.timerInterval = setInterval(() => {
+        if (AppState.currentLot.timeRemaining > 0) {
+            AppState.currentLot.timeRemaining--;
+            const cd = document.getElementById('countdown');
+            const adm = document.getElementById('adminTimer');
+            if (cd) {
+                cd.textContent = '⏱ ' + formatTime(AppState.currentLot.timeRemaining);
+                if (AppState.currentLot.timeRemaining <= 30) {
+                    cd.classList.add('urgent');
+                }
+            }
+            if (adm) adm.textContent = formatTime(AppState.currentLot.timeRemaining);
+        } else {
+            document.getElementById('countdown')?.classList.add('urgent');
+            document.getElementById('countdown') && (document.getElementById('countdown').textContent = '⏱ CLOSED');
+        }
+    }, 1000);
+
+    // Simulated bidders
+    if (AppState.simInterval) clearInterval(AppState.simInterval);
+    AppState.simInterval = setInterval(simulateBidding, 8000);
+}
+
+function loadStream() {
+    const channel = document.getElementById('channelInput').value.trim() || 'livestockauction';
+    AppState.streamChannel = channel;
+    const iframe = document.getElementById('twitchPlayer');
+    const parent = window.location.hostname || 'localhost';
+    iframe.src = `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${parent}&muted=true`;
+    showToast(`Loading stream: ${channel}`, 'success');
+}
+
+function toggleChat() {
+    const channel = AppState.streamChannel;
+    window.open(`https://www.twitch.tv/popout/${channel}/chat`, 'TwitchChat', 'width=400,height=600');
+}
+
+function toggleFullscreen() {
+    const container = document.getElementById('videoContainer');
+    if (container.requestFullscreen) container.requestFullscreen();
+    else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+}
+
+function placeQuickBid(increment) {
+    const newBid = AppState.currentLot.currentBid + increment;
+    if (newBid > AppState.balance) {
+        showToast('Insufficient balance! Add funds to continue.', 'error');
+        return;
+    }
+    processBid(newBid);
+}
+
+function placeCustomBid() {
+    const input = document.getElementById('customBid');
+    const amount = parseInt(input.value);
+    
+    if (!amount || amount <= AppState.currentLot.currentBid) {
+        showToast(`Bid must exceed ${formatMoney(AppState.currentLot.currentBid)}`, 'error');
+        return;
+    }
+    if (amount > AppState.balance) {
+        showToast('Insufficient balance! Add funds to continue.', 'error');
+        return;
+    }
+    processBid(amount);
+    input.value = '';
+}
+
+function buyNow() {
+    const price = AppState.currentLot.buyNowPrice;
+    if (price > AppState.balance) {
+        showToast('Insufficient balance!', 'error');
+        return;
+    }
+    processBid(price, true);
+}
+
+function processBid(amount, isBuyNow = false) {
+    const lot = AppState.currentLot;
+    lot.currentBid = amount;
+    
+    // Record bid
+    const bid = {
+        id: Date.now(),
+        name: 'You',
+        amount: amount,
+        time: 'Just now',
+        avatar: 'YO',
+        isYou: true,
+        lotName: lot.name,
+        won: isBuyNow,
+        paid: false
+    };
+    
+    AppState.bidHistory.unshift(bid);
+    AppState.myBids.unshift(bid);
+    if (AppState.bidHistory.length > 20) AppState.bidHistory.pop();
+    
+    // Update UI
+    const priceEl = document.getElementById('currentPrice');
+    if (priceEl) priceEl.textContent = formatMoney(amount);
+    
+    const historyEl = document.getElementById('bidHistoryContainer');
+    if (historyEl) historyEl.innerHTML = renderBidHistory();
+    
+    // Reset timer on activity
+    lot.timeRemaining = Math.min(lot.timeRemaining + 15, 180);
+    
+    const msg = isBuyNow 
+        ? `🏆 You won ${lot.name} for ${formatMoney(amount)}! Proceed to payment.` 
+        : `Bid placed: ${formatMoney(amount)}`;
+    showToast(msg, isBuyNow ? 'success' : 'success');
+    
+    if (isBuyNow) {
+        document.getElementById('buyNowBtn').disabled = true;
+        document.getElementById('buyNowBtn').textContent = '✅ Sold to You';
+        setTimeout(() => openPaymentModal(amount), 1000);
+    }
+}
+
+function simulateBidding() {
+    const lot = AppState.currentLot;
+    if (lot.timeRemaining <= 0 || Math.random() > 0.35) return;
+    
+    const names = ['Rancher_Joe', 'CattleKing_99', 'TexasLonghorns', 'BovineBuyer', 'Stockyard_Sam', 'Angus_Al', 'PrairieRose'];
+    const name = names[Math.floor(Math.random() * names.length)];
+    const increment = [50, 100, 150, 200][Math.floor(Math.random() * 4)];
+    const amount = lot.currentBid + increment;
+    
+    lot.currentBid = amount;
+    
+    const bid = {
+        id: Date.now(),
+        name: name,
+        amount: amount,
+        time: 'Just now',
+        avatar: name.split('_').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
+        isYou: false
+    };
+    
+    AppState.bidHistory.unshift(bid);
+    if (AppState.bidHistory.length > 20) AppState.bidHistory.pop();
+    
+    const priceEl = document.getElementById('currentPrice');
+    if (priceEl) priceEl.textContent = formatMoney(amount);
+    
+    const historyEl = document.getElementById('bidHistoryContainer');
+    if (historyEl) historyEl.innerHTML = renderBidHistory();
+    
+    lot.timeRemaining = Math.min(lot.timeRemaining + 10, 180);
+}
+
+function setReminder(lotId) {
+    showToast(`🔔 Reminder set for Lot ${lotId}. We'll notify you 15 minutes before.`, 'success');
+}
+
+function previewLot(id) {
+    showToast(`Preview: Lot ${id} — feature coming in v2`, 'warning');
+}
+
+// ==================== PAYMENTS ====================
+function setAddFunds(amount) {
+    document.getElementById('addFundsAmount').value = amount;
+}
+
+function addFunds() {
+    const amount = parseInt(document.getElementById('addFundsAmount').value);
+    if (!amount || amount < 10) {
+        showToast('Please enter a valid amount', 'error');
+        return;
+    }
+    
+    // Simulate Stripe processing
+    showToast('Processing payment...', 'success');
+    setTimeout(() => {
+        AppState.balance += amount;
+        AppState.payments.unshift({
+            id: Date.now(),
+            type: 'deposit',
+            amount: amount,
+            date: new Date().toLocaleDateString(),
+            status: 'complete'
+        });
+        
+        document.getElementById('headerBalance').textContent = '$' + AppState.balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+        showToast(`Successfully added ${formatMoney(amount)} to your account!`, 'success');
+        renderPage('payments');
+    }, 1500);
+}
+
+function openPaymentModal(bidAmount) {
+    const premium = Math.round(bidAmount * 0.08);
+    const transport = 350;
+    const total = bidAmount + premium + transport;
+    
+    document.getElementById('payBidAmount').textContent = formatMoney(bidAmount);
+    document.getElementById('payPremium').textContent = formatMoney(premium);
+    document.getElementById('payTotal').textContent = formatMoney(total);
+    document.getElementById('paymentModal').classList.add('active');
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').classList.remove('active');
+}
+
+function processPayment(e) {
+    if (e) e.preventDefault();
+    
+    const btn = document.getElementById('paySubmitBtn');
+    btn.innerHTML = '<div class="spinner"></div> Processing...';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+        // Mark bid as paid
+        AppState.myBids.forEach(b => { if (b.won && !b.paid) b.paid = true; });
+        
+        // Deduct from balance
+        const totalText = document.getElementById('payTotal').textContent.replace(/[$,]/g, '');
+        AppState.balance -= parseInt(totalText);
+        document.getElementById('headerBalance').textContent = '$' + AppState.balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+        
+        // Record payment
+        AppState.payments.unshift({
+            id: Date.now(),
+            type: 'payment',
+            amount: parseInt(totalText),
+            date: new Date().toLocaleDateString(),
+            status: 'complete'
+        });
+        
+        closePaymentModal();
+        btn.innerHTML = 'Pay Now';
+        btn.disabled = false;
+        showToast('✅ Payment successful! Receipt emailed.', 'success');
+        
+        if (AppState.currentPage === 'dashboard' || AppState.currentPage === 'bids') {
+            renderPage(AppState.currentPage);
+        }
+    }, 2000);
+}
+
+// ==================== ADMIN ACTIONS ====================
+function adminUpdateLot() {
+    const lot = AppState.currentLot;
+    lot.id = document.getElementById('adminLotId').value || lot.id;
+    lot.reservePrice = parseInt(document.getElementById('adminReserve').value) || lot.reservePrice;
+    lot.startingBid = parseInt(document.getElementById('adminStart').value) || lot.startingBid;
+    lot.buyNowPrice = parseInt(document.getElementById('adminBuyNow').value) || lot.buyNowPrice;
+    lot.timeRemaining = parseInt(document.getElementById('adminTimerSet').value) || lot.timeRemaining;
+    
+    const newChannel = document.getElementById('adminChannel').value;
+    if (newChannel && newChannel !== AppState.streamChannel) {
+        AppState.streamChannel = newChannel;
+        document.getElementById('twitchPlayer').src = `https://player.twitch.tv/?channel=${newChannel}&parent=${window.location.hostname || 'localhost'}&muted=true`;
+    }
+    
+    showToast('Lot settings updated', 'success');
+    renderPage('admin');
+}
+
+function adminExtendTimer(seconds) {
+    AppState.currentLot.timeRemaining += seconds;
+    showToast(`Timer extended by ${seconds} seconds`, 'success');
+    renderPage('admin');
+}
+
+function adminCloseLot() {
+    clearInterval(AppState.timerInterval);
+    clearInterval(AppState.simInterval);
+    AppState.currentLot.timeRemaining = 0;
+    AppState.currentLot.status = 'sold';
+    
+    // Move to sold in lots array
+    const lotIdx = AppState.lots.findIndex(l => l.id === AppState.currentLot.id);
+    if (lotIdx >= 0) {
+        AppState.lots[lotIdx].status = 'sold';
+        AppState.lots[lotIdx].finalPrice = AppState.currentLot.currentBid;
+    }
+    
+    showToast('🔨 LOT SOLD! Moving to next...', 'success');
+    setTimeout(() => {
+        // Auto-advance to next upcoming
+        const next = AppState.lots.find(l => l.status === 'upcoming');
+        if (next) {
+            AppState.currentLot = {
+                ...AppState.currentLot,
+                id: next.id,
+                name: next.name,
+                currentBid: next.price,
+                startingBid: next.price,
+                timeRemaining: 180,
+                status: 'live',
+                images: [next.image],
+                tags: next.tags.split(' • ').map((t, i) => ({ label: t, icon: ['🎂','⚖️','🏷️','💉'][i] || '📋' }))
+            };
+            next.status = 'live';
+            renderPage('admin');
+            initLiveAuction();
+            showToast(`Now selling: ${next.name}`, 'success');
+        }
+    }, 2000);
+}
+
+function adminPassLot() {
+    AppState.currentLot.status = 'passed';
+    showToast('Lot passed. Moving to next...', 'warning');
+    adminCloseLot(); // Reuse advancement logic
+}
+
+function goLive(lotId) {
+    const lot = AppState.lots.find(l => l.id === lotId);
+    if (!lot) return;
+    
+    AppState.currentLot = {
+        ...AppState.currentLot,
+        id: lot.id,
+        name: lot.name,
+        currentBid: lot.price,
+        startingBid: lot.price,
+        timeRemaining: 180,
+        status: 'live',
+        images: [lot.image],
+        tags: lot.tags.split(' • ').map((t, i) => ({ label: t, icon: ['🎂','⚖️','🏷️','💉'][i] || '📋' }))
+    };
+    
+    lot.status = 'live';
+    showToast(`${lot.name} is now LIVE!`, 'success');
+    navigateTo('live');
+}
+
+function showAddLotForm() {
+    showToast('Add Lot form would open here (MVP demo)', 'warning');
+}
+
+// ==================== SETTINGS ====================
+function saveSettings(e) {
+    e.preventDefault();
+    showToast('Profile settings saved', 'success');
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    // Check for demo auto-login
+    if (window.location.hash === '#demo') {
+        setTimeout(() => {
+            document.getElementById('loginEmail').value = 'demo@ranch.com';
+            document.getElementById('loginPassword').value = 'password123';
+            handleLogin({ preventDefault: () => {} });
+        }, 500);
+    }
+});
 </script>
 
 </body>
